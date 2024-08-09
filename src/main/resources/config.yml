@@ -1,0 +1,29 @@
+phase1:
+  breaktime: 220
+  add: -100
+  shrinktime: 120
+  damage: 0.1
+
+phase2:
+  breaktime: 180
+  add: -100
+  shrinktime: 100
+  damage: 0.15
+
+phase3:
+  breaktime: 120
+  add: -100
+  shrinktime: 80
+  damage: 0.3
+
+phase4:
+  breaktime: 90
+  add: -100
+  shrinktime: 50
+  damage: 0.5
+
+phase5:
+  breaktime: 60
+  add: -90
+  shrinktime: 60
+  damage: 1
