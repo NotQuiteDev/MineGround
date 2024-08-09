@@ -2,6 +2,7 @@ package org.battle.mineground;
 
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.WorldBorder;
 import org.bukkit.boss.BarColor;
@@ -10,6 +11,8 @@ import org.bukkit.boss.BossBar;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
@@ -46,14 +49,30 @@ public class WorldBorderController {
             player.sendTitle("", targetMessage, 10, 70, 20); // 타이틀로 목표 지점 표시
         }
     }
+    private void showTargetLocation2() {
+        String targetMessage = String.format("Target Location: X=%.1f, Z=%.1f", randomCenterX, randomCenterZ);
+        Bukkit.broadcastMessage(targetMessage); // 채팅으로 목표 지점 알림
+    }
     public void startPhases() {
         List<String> phaseKeys = config.getConfigurationSection("").getKeys(false).stream().toList();
         calculateRandomCenter();
         calculateTotalDistance();
+        teleportPlayers();
+        showTargetLocation();
+        showTargetLocation2();
         calculateTotalShrinkTime(phaseKeys);
         executePhase(phaseKeys, 0);  // 첫 번째 페이즈부터 시작
     }
 
+    private void teleportPlayers() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            double randomX = -313 + rand(25, 475);
+            double randomZ = -363 + rand(25, 475);
+            Location randomLocation = new Location(world, randomX, 150, randomZ);
+            player.teleport(randomLocation);
+            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 15 * 20, 1)); // 느린 낙하 효과 적용 (15초)
+        }
+    }
     private void calculateRandomCenter() {
         this.randomCenterX = -313 + rand(25, 475);
         this.randomCenterZ = -363 + rand(25, 475);
@@ -139,6 +158,10 @@ public class WorldBorderController {
             task.cancel(); // 실행 중인 모든 작업 취소
         }
         tasks.clear();  // 작업 리스트 초기화
+        WorldBorder worldBorder = world.getWorldBorder();
+        worldBorder.setCenter(fixedCenterX, fixedCenterZ); // 센터 위치를 기본 위치로 변경
+        worldBorder.setSize(500); // 월드보더 크기를 500으로 설정
+        Bukkit.broadcastMessage("WorldBorder has been reset to the original center (-63, -113) and size (500).");
     }
 
     private int rand(int min, int max) {
