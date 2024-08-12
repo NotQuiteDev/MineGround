@@ -1,4 +1,5 @@
 explosion-radius: 2.0
+lightning-range: 5.0
 
 phase1:
   breaktime: 220

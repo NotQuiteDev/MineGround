@@ -18,6 +18,7 @@ public class MineGround extends JavaPlugin {
         // MGCommand 클래스의 인스턴스를 생성하고 명령어로 등록
         this.getCommand("mg").setExecutor(new MGCommand(this, worldBorderController));
         getServer().getPluginManager().registerEvents(new HasteArrowListener(this), this);
+        getServer().getPluginManager().registerEvents(new WaterBreathing2ArrowListener(this), this);  // 새 리스너 등록
     }
     public double getExplosionRadius() {
         return explosionRadius;
