@@ -1,3 +1,5 @@
+explosion-radius: 2.0
+
 phase1:
   breaktime: 220
   add: -100
@@ -27,3 +29,5 @@ phase5:
   add: -90
   shrinktime: 60
   damage: 1
+
+

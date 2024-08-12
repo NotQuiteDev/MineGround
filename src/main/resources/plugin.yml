@@ -4,5 +4,5 @@ main: org.battle.mineground.MineGround
 api-version: '1.20'
 commands:
   mg:
-    description: Control the world border phases
-    usage: /mg <start|stop>
+    description: Main command for MineGround plugin
+    usage: /mg <start|stop|reload>

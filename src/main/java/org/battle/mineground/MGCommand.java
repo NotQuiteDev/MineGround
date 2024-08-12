@@ -37,6 +37,16 @@ public class MGCommand implements CommandExecutor {
                     sender.sendMessage("World border adjustment is not running.");
                 }
                 return true;
+            } else if (args[0].equalsIgnoreCase("reload")) {
+                plugin.reloadConfig();
+
+                // 설정 값을 다시 로드하여 메모리에 반영
+                if (plugin instanceof MineGround) {
+                    ((MineGround) plugin).loadConfigValues();
+                }
+
+                sender.sendMessage("Configuration reloaded!");
+                return true;
             }
         }
         return false;
