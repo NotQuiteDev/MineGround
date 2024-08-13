@@ -79,25 +79,14 @@ public class WorldBorderController {
         String survivalCommand = "gamemode survival *";
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), survivalCommand);
 
-        // 6. 특정 위치에 랜덤 스폰 명령어 실행
-        String spawnCommand1 = "lc randomspawn special1 500";
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), spawnCommand1);
 
-        String spawnCommand2 = "lc randomspawn special2 500";
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), spawnCommand2);
-
-        String spawnCommand3 = "lc randomspawn special3 500";
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), spawnCommand3);
-
-        String spawnCommand4 = "lc randomspawn special4 500";
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), spawnCommand4);
-
-        String spawnCommand5 = "lc randomspawn special5 500";
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), spawnCommand5);
 
         // 4. 모든 상자 초기화 (lc respawnall)
         String respawnCommand = "lc respawnall";
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), respawnCommand);
+
+
+
     }
     // 파티클 소환 메소드
     // 파티클 소환 메소드
@@ -176,6 +165,10 @@ public class WorldBorderController {
                 // 월드보더 센터 이동
                 moveCenter(shrinktime);
 
+                // 해당 index에 따라 랜덤 스폰 명령어 실행
+                String randomSpawnCommand = String.format("lc randomspawn special%d", index + 1);
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), randomSpawnCommand);
+
                 // 다음 페이즈 실행
                 executePhase(phaseKeys, index + 1);
             }
@@ -229,16 +222,12 @@ public class WorldBorderController {
 
         // lc randomradius를 모두 0으로 설정
         for (int i = 1; i <= 5; i++) {
-            String randomRadiusCommand = String.format("lc randomradius special%d 0", i);
+            String randomRadiusCommand = String.format("lc randomspawn special%d 0", i);
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), randomRadiusCommand);
         }
 
-        // lc respawn special1부터 special5까지 실행
-        for (int i = 1; i <= 5; i++) {
-            String respawnCommand = String.format("lc randomspawn special%d 500", i);
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), respawnCommand);
         }
-    }
+
 
     private int rand(int min, int max) {
         return random.nextInt(max - min + 1) + min;
