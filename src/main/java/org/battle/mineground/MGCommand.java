@@ -3,6 +3,7 @@ package org.battle.mineground;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class MGCommand implements CommandExecutor {
@@ -18,6 +19,16 @@ public class MGCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        // 명령어를 실행한 사용자가 플레이어인지 확인
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            // OP 권한이 있는지 확인
+            if (!player.isOp()) {
+                player.sendMessage("You do not have permission to use this command.");
+                return true;
+            }
+        }
+
         if (args.length > 0) {
             if (args[0].equalsIgnoreCase("start")) {
                 if (!isRunning) {

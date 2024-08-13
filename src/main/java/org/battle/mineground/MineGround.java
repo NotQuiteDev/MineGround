@@ -14,6 +14,7 @@ public class MineGround extends JavaPlugin {
         loadConfigValues();
         explosionRadius = getConfig().getDouble("explosion-radius", 2.0);
         worldBorderController = new WorldBorderController(this);
+        getServer().getPluginManager().registerEvents(new PlayerDeathListener(), this);
 
         // MGCommand 클래스의 인스턴스를 생성하고 명령어로 등록
         this.getCommand("mg").setExecutor(new MGCommand(this, worldBorderController));
