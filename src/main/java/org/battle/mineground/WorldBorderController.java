@@ -166,7 +166,7 @@ public class WorldBorderController {
                 moveCenter(shrinktime);
 
                 // 해당 index에 따라 랜덤 스폰 명령어 실행
-                String randomSpawnCommand = String.format("lc randomspawn special%d", index + 1);
+                String randomSpawnCommand = String.format("lc randomspawn special%d 500", index + 1);
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), randomSpawnCommand);
 
                 // 다음 페이즈 실행
