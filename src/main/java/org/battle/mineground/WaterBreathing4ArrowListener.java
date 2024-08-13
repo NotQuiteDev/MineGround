@@ -66,7 +66,7 @@ public class WaterBreathing4ArrowListener implements Listener {
                     Location loc = new Location(center.getWorld(), x, y, z);
                     if (center.distance(loc) <= radius) {
                         Block block = loc.getBlock();
-                        if (block.getType() != Material.AIR) {
+                        if (block.getType() != Material.AIR && block.getType() != Material.CHEST && block.getType() != Material.BARRIER && block.getType() != Material.BEDROCK) {
                             block.setType(Material.PACKED_ICE); // 녹지 않는 얼음 사용
                         }
                     }
@@ -82,7 +82,7 @@ public class WaterBreathing4ArrowListener implements Listener {
         freezeArea(center, radius);
 
         // 엔티티를 확실히 가두기 위해 더 큰 구체를 생성
-        int expandedRadius = 3; //
+        int expandedRadius = 3;
         int startX = center.getBlockX() - expandedRadius;
         int endX = center.getBlockX() + expandedRadius;
         int startY = center.getBlockY() - expandedRadius;
@@ -96,7 +96,7 @@ public class WaterBreathing4ArrowListener implements Listener {
                     Location loc = new Location(center.getWorld(), x, y, z);
                     if (center.distance(loc) <= expandedRadius) {
                         Block block = loc.getBlock();
-                        if (block.getType() == Material.AIR || block.getType() == Material.CAVE_AIR) {
+                        if ((block.getType() == Material.AIR || block.getType() == Material.CAVE_AIR) && block.getType() != Material.CHEST && block.getType() != Material.BARRIER && block.getType() != Material.BEDROCK) {
                             block.setType(Material.PACKED_ICE); // 확실히 가두기 위해 녹지 않는 얼음 사용
                         }
                     }

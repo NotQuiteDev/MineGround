@@ -65,8 +65,9 @@ public class WaterBreathing5ArrowListener implements Listener {
                     // 동그란 형태를 유지하기 위해 거리 체크
                     if (center.distance(loc) <= radius) {
                         Block block = loc.getBlock();
-                        // 블록이 공중이나 물이 아닌 경우 마그마 블록으로 변환
-                        if (block.getType() != Material.AIR && block.getType() != Material.WATER) {
+                        // 특정 블록이 아닌 경우 마그마 블록으로 변환
+                        if (block.getType() != Material.AIR && block.getType() != Material.WATER &&
+                                block.getType() != Material.CHEST && block.getType() != Material.BARRIER && block.getType() != Material.BEDROCK) {
                             block.setType(Material.MAGMA_BLOCK);
                         }
                     }
