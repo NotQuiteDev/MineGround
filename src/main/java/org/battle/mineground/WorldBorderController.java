@@ -247,8 +247,6 @@ public class WorldBorderController implements Listener{
 
         moveCenter(shrinktime);
 
-        String randomSpawnCommand = String.format("lc randomspawn special%d 500", index + 1);
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), randomSpawnCommand);
 
         // Shrink Time 동안의 경고 메시지
         BukkitRunnable shrinkTimeTask = new BukkitRunnable() {
@@ -320,11 +318,6 @@ public class WorldBorderController implements Listener{
         worldBorder.setSize(500); // 월드보더 크기를 500으로 설정
         Bukkit.broadcastMessage("WorldBorder has been reset to the original center (-63, -113) and size (500).");
 
-        // lc randomradius를 모두 0으로 설정
-        for (int i = 1; i <= 5; i++) {
-            String randomRadiusCommand = String.format("lc randomspawn special%d 0", i);
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), randomRadiusCommand);
-        }
 
         // 보스바 제거
         if (bossBar != null) {
