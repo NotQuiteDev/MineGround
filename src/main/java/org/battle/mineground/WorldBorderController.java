@@ -3,8 +3,15 @@ package org.battle.mineground;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.*;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarStyle;
+import org.bukkit.boss.BossBar;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -14,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class WorldBorderController {
+public class WorldBorderController implements Listener{
 
     private final JavaPlugin plugin;
     private final World world;
@@ -28,12 +35,15 @@ public class WorldBorderController {
     private double totalDistanceX;
     private double totalDistanceZ;
     private double totalShrinkTime;
+    private BossBar bossBar; // 보스바 추가
+    private int survivingPlayers;
     private BukkitRunnable particleTask;
 
     public WorldBorderController(JavaPlugin plugin) {
         this.plugin = plugin;
         this.world = Bukkit.getWorld("world"); // 월드 이름을 필요에 따라 변경하세요
         this.config = plugin.getConfig();
+        this.survivingPlayers = Bukkit.getOnlinePlayers().size();
     }
 
     private void showTargetLocation() {
@@ -50,6 +60,11 @@ public class WorldBorderController {
     }
 
     public void startPhases() {
+        // 현재 서버에 있는 생존자(서바이벌 모드)의 수를 카운트
+
+
+
+
         List<String> phaseKeys = config.getConfigurationSection("").getKeys(false).stream().toList();
         calculateRandomCenter();
         calculateTotalDistance();
@@ -59,8 +74,58 @@ public class WorldBorderController {
         calculateTotalShrinkTime(phaseKeys);
         performAdditionalCommands();
         executePhase(phaseKeys, 0);  // 첫 번째 페이즈부터 시작
+
+        int totalPlayers = 0;
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (player.getGameMode() == GameMode.SURVIVAL) {
+                totalPlayers++;
+            }
+        }
+        survivingPlayers = totalPlayers;
+
+        // 보스바 초기화
+        bossBar = Bukkit.createBossBar("Survivors: " + survivingPlayers + "/" + totalPlayers, BarColor.GREEN, BarStyle.SOLID);
+        bossBar.setVisible(true);
+
+        // 모든 플레이어를 보스바에 추가
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            bossBar.addPlayer(player);
+        }
     }
 
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        Player player = event.getEntity();
+        player.setGameMode(GameMode.SPECTATOR); // 플레이어를 관전자 모드로 변경
+        if (survivingPlayers > 0) {
+            survivingPlayers--;
+        }
+        updateBossBar();
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+        if (player.getGameMode() == GameMode.SURVIVAL && survivingPlayers > 0) {
+            survivingPlayers--;
+        }
+        updateBossBar();
+    }
+    private void updateBossBar() {
+        int totalPlayers = Bukkit.getOnlinePlayers().size();
+        double progress = (double) survivingPlayers / totalPlayers;
+        bossBar.setTitle("Survivors: " + survivingPlayers + "/" + totalPlayers);
+        bossBar.setProgress(progress);
+
+        // 보스바 색상 업데이트 (예: 생존자가 적을수록 색상 변경)
+        if (progress > 0.5) {
+            bossBar.setColor(BarColor.GREEN);
+        } else if (progress > 0.2) {
+            bossBar.setColor(BarColor.YELLOW);
+        } else {
+            bossBar.setColor(BarColor.RED);
+        }
+    }
     private void performAdditionalCommands() {
         // 1. 경험치 설정 (exp set * <경험치>)
         int experience = config.getInt("experience");
@@ -259,6 +324,12 @@ public class WorldBorderController {
         for (int i = 1; i <= 5; i++) {
             String randomRadiusCommand = String.format("lc randomspawn special%d 0", i);
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), randomRadiusCommand);
+        }
+
+        // 보스바 제거
+        if (bossBar != null) {
+            bossBar.removeAll(); // 보스바를 모든 플레이어로부터 제거
+            bossBar = null; // 보스바 참조 제거
         }
     }
 

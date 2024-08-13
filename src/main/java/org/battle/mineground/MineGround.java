@@ -5,6 +5,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class MineGround extends JavaPlugin {
 
     private WorldBorderController worldBorderController;
+    private GameBossBar gameBossBar;
     private double explosionRadius;
 
     @Override
@@ -13,7 +14,10 @@ public class MineGround extends JavaPlugin {
         loadConfigValues();
         explosionRadius = getConfig().getDouble("explosion-radius", 2.0);
         worldBorderController = new WorldBorderController(this);
-        getServer().getPluginManager().registerEvents(new PlayerDeathListener(), this);
+
+        // GameBossBar 생성 및 이벤트 등록
+        gameBossBar = new GameBossBar(this);
+        getServer().getPluginManager().registerEvents(gameBossBar, this);
 
         // MGCommand 클래스의 인스턴스를 생성하고 명령어로 등록
         MGCommand mgCommand = new MGCommand(this, worldBorderController);
@@ -21,6 +25,7 @@ public class MineGround extends JavaPlugin {
 
         // MGCommand를 이벤트 리스너로 등록
         getServer().getPluginManager().registerEvents(mgCommand, this);
+        getServer().getPluginManager().registerEvents(worldBorderController, this); // 이벤트 리스너 등록
 
         // 다른 리스너들 등록
         getServer().getPluginManager().registerEvents(new HasteArrowListener(this), this);
@@ -40,6 +45,14 @@ public class MineGround extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        // 플러그인 종료 시 로직
+        // 게임 종료 시 보스바 제거
+        if (gameBossBar != null) {
+            gameBossBar.removeBossBar();
+        }
+
+        // WorldBorderController에서 실행 중인 작업 정리
+        if (worldBorderController != null) {
+            worldBorderController.stopPhases();
+        }
     }
 }
