@@ -1,10 +1,7 @@
 package org.battle.mineground;
 
 
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.WorldBorder;
+import org.bukkit.*;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -30,7 +27,7 @@ public class WorldBorderController {
     private double totalDistanceX;
     private double totalDistanceZ;
     private double totalShrinkTime;
-
+    private BukkitRunnable particleTask;
     public WorldBorderController(JavaPlugin plugin) {
         this.plugin = plugin;
         this.world = Bukkit.getWorld("world"); // 월드 이름을 필요에 따라 변경하세요
@@ -41,14 +38,15 @@ public class WorldBorderController {
 
 
     private void showTargetLocation() {
-        String targetMessage = String.format("Target Location: X=%.1f, Z=%.1f", randomCenterX, randomCenterZ);
+        String titleMessage = "§c§lFinal Safe Zone";
+        String subtitleMessage = String.format("§e§lMove to X=%.1f, Z=%.1f", randomCenterX, randomCenterZ);
         for (Player player : Bukkit.getOnlinePlayers()) {
-            player.sendTitle("", targetMessage, 10, 70, 20); // 타이틀로 목표 지점 표시
+            player.sendTitle(titleMessage, subtitleMessage, 10, 70, 20); // 타이틀로 마지막 안전 구역 안내
         }
     }
     private void showTargetLocation2() {
-        String targetMessage = String.format("Target Location: X=%.1f, Z=%.1f", randomCenterX, randomCenterZ);
-        Bukkit.broadcastMessage(targetMessage); // 채팅으로 목표 지점 알림
+        String targetMessage = String.format("§c§lAttention! §eThe final safe zone is located at §c§lX=%.1f, Z=%.1f§e. Move quickly!", randomCenterX, randomCenterZ);
+        Bukkit.broadcastMessage(targetMessage); // 채팅으로 마지막 안전 구역 알림
     }
     public void startPhases() {
         List<String> phaseKeys = config.getConfigurationSection("").getKeys(false).stream().toList();
@@ -58,7 +56,53 @@ public class WorldBorderController {
         showTargetLocation();
         showTargetLocation2();
         calculateTotalShrinkTime(phaseKeys);
+        performAdditionalCommands();
         executePhase(phaseKeys, 0);  // 첫 번째 페이즈부터 시작
+    }
+    private void performAdditionalCommands() {
+        // 1. 경험치 설정 (exp set * <경험치>)
+        int experience = config.getInt("experience");
+        String expCommand = String.format("exp set * %d", experience);
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), expCommand);
+
+        // 2. 모든 플레이어 치유 (heal *)
+        String healCommand = "heal *";
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), healCommand);
+
+        // 3. 아이템 초기화 (clear * **)
+        String clearCommand = "clear * **";
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), clearCommand);
+
+        // 4. 모든 상자 초기화 (lc respawnall)
+        String respawnCommand = "lc respawnall";
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), respawnCommand);
+        // 3. 모든 플레이어 서바이벌 모드로 변경 (gamemode survival *)
+        String survivalCommand = "gamemode survival *";
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), survivalCommand);
+
+    }
+    // 파티클 소환 메소드
+    // 파티클 소환 메소드
+    // 파티클 빔 생성 메소드
+    public void spawnParticleBeam(World world, double x, double z) {
+        particleTask = new BukkitRunnable() {
+            @Override
+            public void run() {
+                for (int y = 0; y <= world.getMaxHeight(); y += 5) { // Y축 간격을 늘려 파티클 수 줄이기
+                    Location location = new Location(world, x, y, z);
+                    world.spawnParticle(Particle.GLOW_SQUID_INK, location, 100, 0.1, 0.1, 0.1, 0, null, true);
+                    // 파티클 수를 줄여서 성능 최적화
+                }
+            }
+        };
+        particleTask.runTaskTimer(plugin, 0L, 20L); // 20틱(1초) 간격으로 파티클 생성
+    }
+    // 파티클 소환 취소 메소드
+    public void cancelParticleBeam() {
+        if (particleTask != null) {
+            particleTask.cancel();
+            particleTask = null;
+        }
     }
 
     private void teleportPlayers() {
@@ -75,6 +119,7 @@ public class WorldBorderController {
         this.randomCenterZ = -363 + rand(25, 475);
         // HUD에 목표 지점 표시
         showTargetLocation();
+        spawnParticleBeam(Bukkit.getWorld("world"), randomCenterX, randomCenterZ); // 파티클 소환
     }
 
     private void calculateTotalDistance() {
@@ -155,6 +200,9 @@ public class WorldBorderController {
             task.cancel(); // 실행 중인 모든 작업 취소
         }
         tasks.clear();  // 작업 리스트 초기화
+        // 파티클 빔 소환 취소
+        cancelParticleBeam();
+
         WorldBorder worldBorder = world.getWorldBorder();
         worldBorder.setCenter(fixedCenterX, fixedCenterZ); // 센터 위치를 기본 위치로 변경
         worldBorder.setSize(500); // 월드보더 크기를 500으로 설정
