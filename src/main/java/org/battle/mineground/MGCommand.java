@@ -1,12 +1,16 @@
 package org.battle.mineground;
 
+import org.bukkit.GameMode;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class MGCommand implements CommandExecutor {
+public class MGCommand implements CommandExecutor, Listener {
 
     private final JavaPlugin plugin;
     private final WorldBorderController worldBorderController;
@@ -15,6 +19,8 @@ public class MGCommand implements CommandExecutor {
     public MGCommand(JavaPlugin plugin, WorldBorderController worldBorderController) {
         this.plugin = plugin;
         this.worldBorderController = worldBorderController;
+        // 이벤트 리스너 등록
+        plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
     @Override
@@ -61,5 +67,15 @@ public class MGCommand implements CommandExecutor {
             }
         }
         return false;
+    }
+
+    // PlayerJoinEvent를 처리하여 플레이어를 관전자 모드로 설정
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        if (isRunning) {
+            Player player = event.getPlayer();
+            player.setGameMode(GameMode.SPECTATOR);
+            player.sendMessage("The game is running, you are now in spectator mode.");
+        }
     }
 }

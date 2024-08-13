@@ -1,13 +1,12 @@
 package org.battle.mineground;
 
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
+
 public class MineGround extends JavaPlugin {
 
     private WorldBorderController worldBorderController;
-
     private double explosionRadius;
+
     @Override
     public void onEnable() {
         saveDefaultConfig();  // 기본 설정 파일 저장
@@ -17,16 +16,24 @@ public class MineGround extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerDeathListener(), this);
 
         // MGCommand 클래스의 인스턴스를 생성하고 명령어로 등록
-        this.getCommand("mg").setExecutor(new MGCommand(this, worldBorderController));
+        MGCommand mgCommand = new MGCommand(this, worldBorderController);
+        this.getCommand("mg").setExecutor(mgCommand);
+
+        // MGCommand를 이벤트 리스너로 등록
+        getServer().getPluginManager().registerEvents(mgCommand, this);
+
+        // 다른 리스너들 등록
         getServer().getPluginManager().registerEvents(new HasteArrowListener(this), this);
-        getServer().getPluginManager().registerEvents(new WaterBreathing2ArrowListener(this), this);  // 새 리스너 등록
+        getServer().getPluginManager().registerEvents(new WaterBreathing2ArrowListener(this), this);
         getServer().getPluginManager().registerEvents(new WaterBreathing3ArrowListener(this), this);
         getServer().getPluginManager().registerEvents(new WaterBreathing4ArrowListener(this), this);
         getServer().getPluginManager().registerEvents(new WaterBreathing5ArrowListener(this), this);
     }
+
     public double getExplosionRadius() {
         return explosionRadius;
     }
+
     public void loadConfigValues() {
         explosionRadius = getConfig().getDouble("explosion-radius", 2.0);
     }
