@@ -192,7 +192,11 @@ public class WorldBorderController {
             @Override
             public void run() {
                 if (remainingShrinkTime > 0) {
-                    String cautionMessage = "§c§lCaution! The border is shrinking!";
+                    // 진행 상태 계산 (0 ~ 100%)
+                    int progress = (int) ((1 - (double) remainingShrinkTime / shrinktime) * 100);
+
+                    // 경고 메시지에 진행 상태를 추가
+                    String cautionMessage = String.format("§c§lCaution! The border is shrinking! §e(%d%%)", progress);
                     for (Player player : Bukkit.getOnlinePlayers()) {
                         player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(cautionMessage));
                     }
