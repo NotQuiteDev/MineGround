@@ -1,6 +1,7 @@
 package org.battle.mineground;
 
-
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.*;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -28,14 +29,12 @@ public class WorldBorderController {
     private double totalDistanceZ;
     private double totalShrinkTime;
     private BukkitRunnable particleTask;
+
     public WorldBorderController(JavaPlugin plugin) {
         this.plugin = plugin;
         this.world = Bukkit.getWorld("world"); // 월드 이름을 필요에 따라 변경하세요
         this.config = plugin.getConfig();
-
     }
-
-
 
     private void showTargetLocation() {
         String titleMessage = "§c§lFinal Safe Zone";
@@ -44,10 +43,12 @@ public class WorldBorderController {
             player.sendTitle(titleMessage, subtitleMessage, 10, 70, 20); // 타이틀로 마지막 안전 구역 안내
         }
     }
+
     private void showTargetLocation2() {
         String targetMessage = String.format("§c§lAttention! §eThe final safe zone is located at §c§lX=%.1f, Z=%.1f§e. Move quickly!", randomCenterX, randomCenterZ);
         Bukkit.broadcastMessage(targetMessage); // 채팅으로 마지막 안전 구역 알림
     }
+
     public void startPhases() {
         List<String> phaseKeys = config.getConfigurationSection("").getKeys(false).stream().toList();
         calculateRandomCenter();
@@ -59,6 +60,7 @@ public class WorldBorderController {
         performAdditionalCommands();
         executePhase(phaseKeys, 0);  // 첫 번째 페이즈부터 시작
     }
+
     private void performAdditionalCommands() {
         // 1. 경험치 설정 (exp set * <경험치>)
         int experience = config.getInt("experience");
@@ -73,23 +75,15 @@ public class WorldBorderController {
         String clearCommand = "clear * **";
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), clearCommand);
 
-
-
-        // 5. 모든 플레이어 서바이벌 모드로 변경 (gamemode survival *)
-        String survivalCommand = "gamemode survival *";
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), survivalCommand);
-
-
-
         // 4. 모든 상자 초기화 (lc respawnall)
         String respawnCommand = "lc respawnall";
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), respawnCommand);
 
-
-
+        // 5. 모든 플레이어 서바이벌 모드로 변경 (gamemode survival *)
+        String survivalCommand = "gamemode survival *";
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), survivalCommand);
     }
-    // 파티클 소환 메소드
-    // 파티클 소환 메소드
+
     // 파티클 빔 생성 메소드
     public void spawnParticleBeam(World world, double x, double z) {
         particleTask = new BukkitRunnable() {
@@ -104,6 +98,7 @@ public class WorldBorderController {
         };
         particleTask.runTaskTimer(plugin, 0L, 20L); // 20틱(1초) 간격으로 파티클 생성
     }
+
     // 파티클 소환 취소 메소드
     public void cancelParticleBeam() {
         if (particleTask != null) {
@@ -121,6 +116,7 @@ public class WorldBorderController {
             player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 15 * 20, 1)); // 느린 낙하 효과 적용 (15초)
         }
     }
+
     private void calculateRandomCenter() {
         this.randomCenterX = -313 + rand(25, 475);
         this.randomCenterZ = -363 + rand(25, 475);
@@ -151,31 +147,66 @@ public class WorldBorderController {
         int shrinktime = config.getInt(phaseKey + ".shrinktime");
         double damage = config.getDouble(phaseKey + ".damage");
 
-        BukkitRunnable task = new BukkitRunnable() {
+        // Break Time 동안의 액션바 메시지
+        BukkitRunnable breakTimeTask = new BukkitRunnable() {
+            int remainingBreakTime = breaktime - shrinktime; // Shrink Time과 겹치는 시간 계산
+
             @Override
             public void run() {
-                // 월드보더 크기 조절 명령어 실행
-                String command = String.format("worldborder add %d %d", add, shrinktime);
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
-
-                // 월드보더 데미지 설정 명령어 실행
-                String damageCommand = String.format("worldborder damage amount %f", damage);
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), damageCommand);
-
-                // 월드보더 센터 이동
-                moveCenter(shrinktime);
-
-                // 해당 index에 따라 랜덤 스폰 명령어 실행
-                String randomSpawnCommand = String.format("lc randomspawn special%d 500", index + 1);
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), randomSpawnCommand);
-
-                // 다음 페이즈 실행
-                executePhase(phaseKeys, index + 1);
+                if (remainingBreakTime > 0) {
+                    String actionBarMessage = String.format("Next phase in %d seconds", remainingBreakTime);
+                    for (Player player : Bukkit.getOnlinePlayers()) {
+                        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(actionBarMessage));
+                    }
+                    remainingBreakTime--;
+                } else {
+                    this.cancel();
+                    // Shrink Time 시작
+                    startShrink(phaseKey, add, shrinktime, damage, index, phaseKeys);
+                }
             }
         };
 
-        task.runTaskLater(plugin, breaktime * 20L); // breaktime 초 후 실행 (틱 단위로 변환)
-        tasks.add(task);  // 실행된 작업을 리스트에 추가
+        breakTimeTask.runTaskTimer(plugin, 0L, 20L); // 1초마다 실행
+        tasks.add(breakTimeTask);
+    }
+
+    private void startShrink(String phaseKey, int add, int shrinktime, double damage, int index, List<String> phaseKeys) {
+        // 월드보더 크기 조절 명령어 실행
+        String command = String.format("worldborder add %d %d", add, shrinktime);
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+
+        // 월드보더 데미지 설정 명령어 실행
+        String damageCommand = String.format("worldborder damage amount %f", damage);
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), damageCommand);
+
+        moveCenter(shrinktime);
+
+        String randomSpawnCommand = String.format("lc randomspawn special%d 500", index + 1);
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), randomSpawnCommand);
+
+        // Shrink Time 동안의 경고 메시지
+        BukkitRunnable shrinkTimeTask = new BukkitRunnable() {
+            int remainingShrinkTime = shrinktime;
+
+            @Override
+            public void run() {
+                if (remainingShrinkTime > 0) {
+                    String cautionMessage = "§c§lCaution! The border is shrinking!";
+                    for (Player player : Bukkit.getOnlinePlayers()) {
+                        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(cautionMessage));
+                    }
+                    remainingShrinkTime--;
+                } else {
+                    this.cancel();
+                    // 다음 페이즈로 넘어감
+                    executePhase(phaseKeys, index + 1);
+                }
+            }
+        };
+
+        shrinkTimeTask.runTaskTimer(plugin, 0L, 20L); // 1초마다 실행
+        tasks.add(shrinkTimeTask);
     }
 
     private void moveCenter(int shrinktime) {
@@ -225,9 +256,7 @@ public class WorldBorderController {
             String randomRadiusCommand = String.format("lc randomspawn special%d 0", i);
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), randomRadiusCommand);
         }
-
-        }
-
+    }
 
     private int rand(int min, int max) {
         return random.nextInt(max - min + 1) + min;
