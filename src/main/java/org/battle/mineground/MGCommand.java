@@ -1,6 +1,7 @@
 package org.battle.mineground;
 
 import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -63,6 +64,20 @@ public class MGCommand implements CommandExecutor, Listener {
                 }
 
                 sender.sendMessage("Configuration reloaded!");
+                return true;
+            } else if (args[0].equalsIgnoreCase("load")) {
+                // 스키매틱 로드 로직 추가
+                SchematicLoader loader = new SchematicLoader();
+                Location location = new Location(plugin.getServer().getWorld("world"), -313, 64, 136);
+                loader.loadSchematic("MHS", location);
+
+                sender.sendMessage("MHS.schematic has been loaded at -313, 64, 136.");
+
+                // 플레이어를 제외한 모든 엔티티 제거
+                plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), "minecraft:kill @e[type=!minecraft:player]");
+                plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), "minecraft:kill @e[type=!minecraft:player]");
+                sender.sendMessage("All entities except players have been killed.");
+
                 return true;
             }
         }
