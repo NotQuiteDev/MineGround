@@ -7,11 +7,13 @@ import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -38,6 +40,23 @@ public class WorldBorderController implements Listener{
     private BossBar bossBar; // 보스바 추가
     private int survivingPlayers;
     private BukkitRunnable particleTask;
+    private boolean isGameRunning = false;
+    private BukkitRunnable fireworkTask;
+
+
+    public boolean isGameRunning() {
+        return isGameRunning;
+    }
+
+    public void startGame() {
+        isGameRunning = true;
+        startPhases();
+    }
+
+    public void stopGame() {
+        isGameRunning = false;
+        stopPhases();
+    }
 
     public WorldBorderController(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -95,6 +114,9 @@ public class WorldBorderController implements Listener{
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
+        if (!isGameRunning) {
+            return; // 게임이 진행 중이 아니면 아무것도 하지 않음
+        }
         Player player = event.getEntity();
         player.setGameMode(GameMode.SPECTATOR); // 플레이어를 관전자 모드로 변경
         if (survivingPlayers > 0) {
@@ -105,6 +127,9 @@ public class WorldBorderController implements Listener{
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
+        if (!isGameRunning) {
+            return; // 게임이 진행 중이 아니면 아무것도 하지 않음
+        }
         Player player = event.getPlayer();
         if (player.getGameMode() == GameMode.SURVIVAL && survivingPlayers > 0) {
             survivingPlayers--;
@@ -202,6 +227,10 @@ public class WorldBorderController implements Listener{
     }
 
     private void executePhase(List<String> phaseKeys, int index) {
+        if (!isGameRunning()) {
+            return;  // 게임이 진행 중이 아니면 실행하지 않음
+        }
+
         if (index >= phaseKeys.size()) {
             return;  // 모든 페이즈가 완료되면 종료
         }
@@ -218,6 +247,11 @@ public class WorldBorderController implements Listener{
 
             @Override
             public void run() {
+                if (!isGameRunning()) {
+                    this.cancel(); // 게임이 중지되면 실행 중인 작업도 취소
+                    return;
+                }
+
                 if (remainingBreakTime > 0) {
                     String actionBarMessage = String.format("Next phase in %d seconds", remainingBreakTime);
                     for (Player player : Bukkit.getOnlinePlayers()) {
@@ -237,6 +271,10 @@ public class WorldBorderController implements Listener{
     }
 
     private void startShrink(String phaseKey, int add, int shrinktime, double damage, int index, List<String> phaseKeys) {
+        if (!isGameRunning()) {
+            return;  // 게임이 진행 중이 아니면 실행하지 않음
+        }
+
         // 월드보더 크기 조절 명령어 실행
         String command = String.format("worldborder add %d %d", add, shrinktime);
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
@@ -247,13 +285,17 @@ public class WorldBorderController implements Listener{
 
         moveCenter(shrinktime);
 
-
         // Shrink Time 동안의 경고 메시지
         BukkitRunnable shrinkTimeTask = new BukkitRunnable() {
             int remainingShrinkTime = shrinktime;
 
             @Override
             public void run() {
+                if (!isGameRunning()) {
+                    this.cancel(); // 게임이 중지되면 실행 중인 작업도 취소
+                    return;
+                }
+
                 if (remainingShrinkTime > 0) {
                     // 진행 상태 계산 (0 ~ 100%)
                     int progress = (int) ((1 - (double) remainingShrinkTime / shrinktime) * 100);
@@ -305,10 +347,15 @@ public class WorldBorderController implements Listener{
     }
 
     public void stopPhases() {
+        // 우승자를 위한 축하 파티 종료
+        stopCelebration();
+
+        // 실행 중인 모든 작업 취소
         for (BukkitRunnable task : tasks) {
-            task.cancel(); // 실행 중인 모든 작업 취소
+            task.cancel();
         }
         tasks.clear();  // 작업 리스트 초기화
+
         // 파티클 빔 소환 취소
         cancelParticleBeam();
 
@@ -318,14 +365,111 @@ public class WorldBorderController implements Listener{
         worldBorder.setSize(500); // 월드보더 크기를 500으로 설정
         Bukkit.broadcastMessage("WorldBorder has been reset to the original center (-63, -113) and size (500).");
 
-
         // 보스바 제거
         if (bossBar != null) {
             bossBar.removeAll(); // 보스바를 모든 플레이어로부터 제거
             bossBar = null; // 보스바 참조 제거
         }
     }
+    public void checkForWinner() {
+        if (survivingPlayers == 1) { // 생존자가 1명 남았을 때
+            Player winner = null;
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                if (player.getGameMode() == GameMode.SURVIVAL) {
+                    winner = player;
+                    break;
+                }
+            }
 
+            if (winner != null) {
+                // 우승자에게 축하 메시지 전송 및 효과
+                String winnerMessage = String.format("§6§lCongratulations! %s is the last survivor and the WINNER!", winner.getName());
+                Bukkit.broadcastMessage(winnerMessage);
+                celebrateWinner(winner);
+
+                // 게임 종료 상태로 변경
+                isGameRunning = false; // 게임이 종료됨을 표시
+            }
+        }
+    }
+
+    private void celebrateWinner(Player winner) {
+        // 모든 플레이어에게 우승자 메시지 타이틀로 표시
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            player.sendTitle("§6§lWinner Winner Chicken Dinner!",
+                    "§e" + winner.getName() + " is the last survivor!",
+                    10, 70, 20); // 타이틀 표시 (10틱 딜레이, 70틱 표시, 20틱 페이드 아웃)
+        }
+
+        // 폭죽 발사
+        fireworkTask = new BukkitRunnable() {
+            @Override
+            public void run() {
+
+                // 우승자의 위치에서 폭죽 생성
+                Location location = winner.getLocation();
+                Firework firework = winner.getWorld().spawn(location, Firework.class);
+                FireworkMeta meta = firework.getFireworkMeta();
+                meta.addEffect(FireworkEffect.builder()
+                        .withColor(Color.RED)
+                        .withColor(Color.YELLOW)
+                        .with(FireworkEffect.Type.BALL_LARGE)
+                        .withFlicker()
+                        .withTrail()
+                        .build());
+                meta.setPower(2);
+                firework.setFireworkMeta(meta);
+            }
+        };
+
+        // 폭죽을 30초 동안 발사
+        fireworkTask.runTaskTimer(plugin, 0L, 40L); // 40틱(2초) 간격으로 실행
+        Bukkit.getScheduler().runTaskLater(plugin, fireworkTask::cancel, 600L); // 30초 후 폭죽 중단
+
+        // 파티클 효과 추가
+        particleTask = new BukkitRunnable() {
+            @Override
+            public void run() {
+
+                Location location = winner.getLocation();
+                winner.getWorld().spawnParticle(Particle.TOTEM, location, 200, 1, 1, 1, 0.1);
+            }
+        };
+
+        // 파티클을 30초 동안 생성
+        particleTask.runTaskTimer(plugin, 0L, 20L); // 20틱(1초) 간격으로 실행
+        Bukkit.getScheduler().runTaskLater(plugin, particleTask::cancel, 600L); // 30초 후 파티클 중단
+    }
+
+    private void stopCelebration() {
+        if (fireworkTask != null) {
+            fireworkTask.cancel(); // 폭죽 작업 중단
+            fireworkTask = null;
+        }
+
+        if (particleTask != null) {
+            particleTask.cancel(); // 파티클 작업 중단
+            particleTask = null;
+        }
+    }
+    public void handlePlayerDeath(PlayerDeathEvent event) {
+        Player player = event.getEntity();
+        player.setGameMode(GameMode.SPECTATOR); // 플레이어를 관전자 모드로 변경
+        if (survivingPlayers > 0) {
+            survivingPlayers--;
+        }
+        updateBossBar();
+        checkForWinner(); // 우승자 체크
+    }
+
+    public void handlePlayerQuit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+        if (player.getGameMode() == GameMode.SURVIVAL && survivingPlayers > 0) {
+            survivingPlayers--;
+        }
+        updateBossBar();
+        checkForWinner(); // 우승자 체크
+    }
     private int rand(int min, int max) {
         return random.nextInt(max - min + 1) + min;
     }

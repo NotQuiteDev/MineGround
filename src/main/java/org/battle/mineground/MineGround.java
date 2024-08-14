@@ -26,6 +26,8 @@ public class MineGround extends JavaPlugin {
         // MGCommand를 이벤트 리스너로 등록
         getServer().getPluginManager().registerEvents(mgCommand, this);
         getServer().getPluginManager().registerEvents(worldBorderController, this); // 이벤트 리스너 등록
+        WorldBorderController controller = new WorldBorderController(this);
+        getServer().getPluginManager().registerEvents(new GameEventListener(controller), this);
 
         // 다른 리스너들 등록
         getServer().getPluginManager().registerEvents(new HasteArrowListener(this), this);

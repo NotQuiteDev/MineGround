@@ -79,6 +79,15 @@ public class MGCommand implements CommandExecutor, Listener {
                 sender.sendMessage("All entities except players have been killed.");
 
                 return true;
+            } else if (args[0].equalsIgnoreCase("check")) {
+                // 우승자 확인 로직 추가
+                if (isRunning) {
+                    worldBorderController.checkForWinner();
+                    sender.sendMessage("Winner check executed.");
+                } else {
+                    sender.sendMessage("The game is not running.");
+                }
+                return true;
             }
         }
         return false;
