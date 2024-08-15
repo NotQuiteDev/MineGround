@@ -117,18 +117,7 @@ public class WorldBorderController implements Listener{
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
-        if (!isGameRunning) {
-            return; // 게임이 진행 중이 아니면 아무것도 하지 않음
-        }
-
         Player player = event.getEntity();
-
-        // 사망 카운트 감소
-        if (survivingPlayers > 0) {
-            survivingPlayers--;
-        }
-
-        updateBossBar();
 
         // 사망 당시의 위치와 각도 저장
         Location deathLocation = player.getLocation();
@@ -146,8 +135,17 @@ public class WorldBorderController implements Listener{
             player.setGameMode(GameMode.SPECTATOR);
         }, 1L);  // 1틱 지연 후 실행
 
-        // mg check 명령어 실행
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mg check");
+        if (isGameRunning) {
+            // 게임 진행 중일 때만 카운트 감소 및 보스바 업데이트
+            if (survivingPlayers > 0) {
+                survivingPlayers--;
+            }
+
+            updateBossBar();
+
+            // mg check 명령어 실행
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mg check");
+        }
     }
 
     @EventHandler
