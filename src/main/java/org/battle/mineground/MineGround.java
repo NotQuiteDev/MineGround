@@ -14,6 +14,7 @@ public class MineGround extends JavaPlugin {
         loadConfigValues();
         explosionRadius = getConfig().getDouble("explosion-radius", 2.0);
         worldBorderController = new WorldBorderController(this);
+        worldBorderController.startSpectatorParticleTask();
 
         // GameBossBar 생성 및 이벤트 등록
         gameBossBar = new GameBossBar(this);

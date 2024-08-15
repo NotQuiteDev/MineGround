@@ -531,6 +531,21 @@ public class WorldBorderController implements Listener{
         updateBossBar();
         checkForWinner(); // 우승자 체크
     }
+    public void startSpectatorParticleTask() {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                // 서버에 있는 모든 플레이어를 확인
+                for (Player player : Bukkit.getOnlinePlayers()) {
+                    // 플레이어가 관전 모드인 경우 파티클을 생성
+                    if (player.getGameMode() == GameMode.SPECTATOR) {
+                        // END_ROD 파티클을 사용하여 관전자 주변에 소환
+                        player.getWorld().spawnParticle(Particle.END_ROD, player.getLocation(), 10, 0.5, 0.5, 0.5, 0.01);
+                    }
+                }
+            }
+        }.runTaskTimer(plugin, 0L, 20L); // 매 1초마다 실행
+    }
     private int rand(int min, int max) {
         return random.nextInt(max - min + 1) + min;
     }
