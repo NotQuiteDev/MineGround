@@ -437,15 +437,19 @@ public class WorldBorderController implements Listener{
             @Override
             public void run() {
                 // 게임이 종료된 상태라도 불꽃 발사를 계속
-                for (int i = 0; i < random.nextInt(4) + 1; i++) { // 한 번에 1~4개의 불꽃 발사
+                for (int i = 0; i < random.nextInt(4) + 1; i++) {
                     Location location = winner.getLocation();
-                    Firework firework = location.getWorld().spawn(location, Firework.class);
+
+                    // 20-30 블록 랜덤 거리 설정
+                    double offsetX = random.nextDouble() * 20 + 10 * (random.nextBoolean() ? 1 : -1);
+                    double offsetZ = random.nextDouble() * 20 + 10 * (random.nextBoolean() ? 1 : -1);
+                    Location fireworkLocation = location.clone().add(offsetX, 0, offsetZ);
+
+                    Firework firework = fireworkLocation.getWorld().spawn(fireworkLocation, Firework.class);
                     FireworkMeta meta = firework.getFireworkMeta();
-                    meta.addEffect(randomFireworkEffect()); // 랜덤 불꽃 효과 추가
-                    meta.setPower(random.nextInt(3) + 1); // 1~3까지의 랜덤 파워
+                    meta.addEffect(randomFireworkEffect());
+                    meta.setPower(3);  // 데미지를 주지 않도록 파워를 낮게 설정
                     firework.setFireworkMeta(meta);
-
-
                 }
             }
         };
@@ -467,7 +471,12 @@ public class WorldBorderController implements Listener{
         // 파티클을 30초 동안 생성
         particleTask.runTaskTimer(plugin, 0L, 20L); // 20틱(1초) 간격으로 실행
         Bukkit.getScheduler().runTaskLater(plugin, particleTask::cancel, 600L); // 30초 후 파티클 중단
+        // 20초 후 mg stop 명령어 실행
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mg stop");
+        }, 400L); // 20초 후 실행
     }
+
 
     private FireworkEffect randomFireworkEffect() {
         FireworkEffect.Builder builder = FireworkEffect.builder();

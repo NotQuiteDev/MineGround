@@ -145,9 +145,18 @@ public class MGCommand implements CommandExecutor, Listener {
                 if (timeLeft == 10) {
                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mg load");
                 }
+                if (timeLeft == 20) {
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mg stop");
+                }
 
                 if (Bukkit.getOnlinePlayers().size() < 2) {
-                    Bukkit.broadcastMessage("§cNot enough players. Countdown paused.");
+                    String actionBarMessage = "§cNot enough players. Countdown paused.";
+
+                    // 모든 플레이어에게 액션바 메시지 전송
+                    for (Player player : Bukkit.getOnlinePlayers()) {
+                        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(actionBarMessage));
+                    }
+
                     isCountdownActive = false;
                     this.cancel();  // 플레이어가 부족하면 타이머 중지
                     return;
@@ -158,9 +167,6 @@ public class MGCommand implements CommandExecutor, Listener {
                     player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(actionBarMessage));
                 }
 
-                if (timeLeft == 30) {
-                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mg stop");
-                }
 
 
 
