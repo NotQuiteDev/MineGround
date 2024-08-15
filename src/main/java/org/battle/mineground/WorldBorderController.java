@@ -539,12 +539,12 @@ public class WorldBorderController implements Listener{
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     // 플레이어가 관전 모드인 경우 파티클을 생성
                     if (player.getGameMode() == GameMode.SPECTATOR) {
-                        // END_ROD 파티클을 사용하여 관전자 주변에 소환
-                        player.getWorld().spawnParticle(Particle.END_ROD, player.getLocation(), 10, 0.5, 0.5, 0.5, 0.01);
+                        // 파티클 수를 줄이고 Y축을 1 높임, 더 자주 생성
+                        player.getWorld().spawnParticle(Particle.END_ROD, player.getLocation().add(0, 1, 0), 2, 0.3, 0.3, 0.3, 0.05);
                     }
                 }
             }
-        }.runTaskTimer(plugin, 0L, 20L); // 매 1초마다 실행
+        }.runTaskTimer(plugin, 0L, 5L); // 매 5틱마다 실행 (0.25초마다)
     }
     private int rand(int min, int max) {
         return random.nextInt(max - min + 1) + min;
