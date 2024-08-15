@@ -79,6 +79,9 @@ public class WorldBorderController implements Listener{
     }
 
     public void startPhases() {
+
+        // 게임을 시작하므로 진행 상태를 true로 설정
+        isGameRunning = true;
         // 현재 서버에 있는 생존자(서바이벌 모드)의 수를 카운트
 
 
