@@ -120,12 +120,34 @@ public class WorldBorderController implements Listener{
         if (!isGameRunning) {
             return; // 게임이 진행 중이 아니면 아무것도 하지 않음
         }
+
         Player player = event.getEntity();
-        player.setGameMode(GameMode.SPECTATOR); // 플레이어를 관전자 모드로 변경
+
+        // 사망 카운트 감소
         if (survivingPlayers > 0) {
             survivingPlayers--;
         }
+
         updateBossBar();
+
+        // 사망 당시의 위치와 각도 저장
+        Location deathLocation = player.getLocation();
+        float pitch = deathLocation.getPitch();
+        float yaw = deathLocation.getYaw();
+
+        // 1틱 뒤에 플레이어를 리스폰 시킨 후 관전 모드로 변경
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            player.spigot().respawn();  // 플레이어를 즉시 리스폰
+
+            // 리스폰 후 사망 위치로 이동 (pitch와 yaw 포함)
+            player.teleport(new Location(deathLocation.getWorld(), deathLocation.getX(), deathLocation.getY(), deathLocation.getZ(), yaw, pitch));
+
+            // 관전 모드로 변경
+            player.setGameMode(GameMode.SPECTATOR);
+        }, 1L);  // 1틱 지연 후 실행
+
+        // mg check 명령어 실행
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mg check");
     }
 
     @EventHandler
@@ -133,11 +155,16 @@ public class WorldBorderController implements Listener{
         if (!isGameRunning) {
             return; // 게임이 진행 중이 아니면 아무것도 하지 않음
         }
+
         Player player = event.getPlayer();
         if (player.getGameMode() == GameMode.SURVIVAL && survivingPlayers > 0) {
             survivingPlayers--;
         }
+
         updateBossBar();
+
+        // mg check 명령어 실행
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mg check");
     }
     private void updateBossBar() {
         int totalPlayers = Bukkit.getOnlinePlayers().size();
