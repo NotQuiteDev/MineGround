@@ -52,12 +52,9 @@ public class MGCommand implements CommandExecutor, Listener {
                 }
                 return true;
             } else if (args[0].equalsIgnoreCase("stop")) {
-                if (worldBorderController.isGameRunning()) {  // 게임이 실행 중인지 확인
                     worldBorderController.stopGame();  // 게임 중지
                     sender.sendMessage("World border adjustment stopped.");
-                } else {
-                    sender.sendMessage("World border adjustment is not running.");
-                }
+
                 return true;
             } else if (args[0].equalsIgnoreCase("reload")) {
                 plugin.reloadConfig();
