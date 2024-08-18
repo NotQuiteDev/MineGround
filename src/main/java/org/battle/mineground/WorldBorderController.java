@@ -40,6 +40,7 @@ public class WorldBorderController implements Listener{
     private BossBar bossBar; // 보스바 추가
     private int survivingPlayers;
     private BukkitRunnable particleTask;
+    private BukkitRunnable beamParticleTask;
     private boolean isGameRunning = false;
     private BukkitRunnable fireworkTask;
 
@@ -204,7 +205,7 @@ public class WorldBorderController implements Listener{
 
     // 파티클 빔 생성 메소드
     public void spawnParticleBeam(World world, double x, double z) {
-        particleTask = new BukkitRunnable() {
+        beamParticleTask = new BukkitRunnable() {
             @Override
             public void run() {
                 for (int y = 0; y <= world.getMaxHeight(); y += 5) { // Y축 간격을 늘려 파티클 수 줄이기
@@ -214,14 +215,14 @@ public class WorldBorderController implements Listener{
                 }
             }
         };
-        particleTask.runTaskTimer(plugin, 0L, 20L); // 20틱(1초) 간격으로 파티클 생성
+        beamParticleTask.runTaskTimer(plugin, 0L, 20L); // 20틱(1초) 간격으로 파티클 생성
     }
 
     // 파티클 소환 취소 메소드
     public void cancelParticleBeam() {
-        if (particleTask != null) {
-            particleTask.cancel();
-            particleTask = null;
+        if (beamParticleTask != null) {
+            beamParticleTask.cancel();
+            beamParticleTask = null;
         }
     }
 
