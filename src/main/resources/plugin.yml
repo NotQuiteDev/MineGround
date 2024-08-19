@@ -6,3 +6,6 @@ commands:
   mg:
     description: Main command for MineGround plugin
     usage: /mg <start|stop|reload|load|check>
+  switcharrow:
+    description: Switches the currently held arrow to the next one in the inventory.
+    usage: /switcharrow

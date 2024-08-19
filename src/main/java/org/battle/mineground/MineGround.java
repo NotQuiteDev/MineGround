@@ -1,5 +1,7 @@
 package org.battle.mineground;
 
+import org.battle.mineground.arrow_switcher.ArrowSwitcherCommand;
+import org.battle.mineground.arrow_switcher.BowActionListener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class MineGround extends JavaPlugin {
@@ -23,11 +25,14 @@ public class MineGround extends JavaPlugin {
 
         // MGCommand 클래스의 인스턴스를 생성하고 명령어로 등록
         MGCommand mgCommand = new MGCommand(this, worldBorderController);
+        getCommand("switcharrow").setExecutor(new ArrowSwitcherCommand());
         this.getCommand("mg").setExecutor(mgCommand);
 
         // MGCommand를 이벤트 리스너로 등록
         getServer().getPluginManager().registerEvents(mgCommand, this);
         getServer().getPluginManager().registerEvents(worldBorderController, this); // 이벤트 리스너 등록
+        getServer().getPluginManager().registerEvents(new BowActionListener(), this);
+
         WorldBorderController controller = new WorldBorderController(this);
         getServer().getPluginManager().registerEvents(new GameEventListener(controller), this);
 
