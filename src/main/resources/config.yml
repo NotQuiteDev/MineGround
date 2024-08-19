@@ -1,7 +1,18 @@
 explosion-radius: 2.0
+
 lightning-range: 5.0
+
 ice-arrow-radius: 5
+ice-arrow-freeze-chance: 0.3  # 화살이 맞았을 때 블록이 얼음으로 변할 확률
+ice-entity-freeze-chance: 0.2 # 엔티티 주변의 블록이 얼음으로 변할 확률
+
+fire-arrow-radius: 8  # 화염 화살의 반경을 설정
+fire-arrow-duration: 5  # 엔티티가 불에 타는 시간 (초 단위)
+fire-arrow-transform-chance: 0.5  # 마그마 블록으로 변환될 확률 (0.0 ~ 1.0)
+
 experience: 5345
+
+
 phase1:
   breaktime: 220
   add: -100

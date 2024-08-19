@@ -9,7 +9,6 @@ public class MineGround extends JavaPlugin {
     private WorldBorderController worldBorderController;
     private GameBossBar gameBossBar;
     private double explosionRadius;
-
     @Override
     public void onEnable() {
         saveDefaultConfig();  // 기본 설정 파일 저장
@@ -32,7 +31,6 @@ public class MineGround extends JavaPlugin {
         getServer().getPluginManager().registerEvents(mgCommand, this);
         getServer().getPluginManager().registerEvents(worldBorderController, this); // 이벤트 리스너 등록
         getServer().getPluginManager().registerEvents(new BowActionListener(), this);
-
         WorldBorderController controller = new WorldBorderController(this);
         getServer().getPluginManager().registerEvents(new GameEventListener(controller), this);
 
