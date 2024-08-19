@@ -54,7 +54,7 @@ public class ArrowSwitcherCommand implements CommandExecutor {
         }
 
         // 화살이 없거나 1종류만 있는 경우 순환할 필요 없음
-        if (arrowSlots.size() <= 1) {
+        if (arrowSlots.size() <= 0) {
             player.sendMessage("No other arrows to switch to.");
             return;
         }
