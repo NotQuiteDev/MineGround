@@ -51,6 +51,13 @@ public class WorldBorderController implements Listener{
     // 나간 플레이어와 나간 시간 기록을 위한 맵
     private final Map<Player, Long> playerQuitTimestamps = new HashMap<>();
 
+    private BossBar bossBar1;
+
+    // 보스바를 반환하는 메서드 추가
+    public BossBar getBossBar() {
+        return bossBar;
+    }
+
     // 생존자 수 접근자 메서드 (Getter and Setter)
     public int getSurvivingPlayers() {
         return survivingPlayers;
@@ -537,25 +544,9 @@ public class WorldBorderController implements Listener{
             particleTask = null;
         }
     }
-    public void handlePlayerDeath(PlayerDeathEvent event) {
-        Player player = event.getEntity();
-        player.setGameMode(GameMode.SPECTATOR); // 플레이어를 관전자 모드로 변경
-        if (survivingPlayers > 0) {
-            survivingPlayers--;
-        }
-        updateBossBar();
-        checkForWinner(); // 우승자 체크
-    }
 
-    public void handlePlayerQuit(PlayerQuitEvent event) {
-        Player player = event.getPlayer();
-        if (player.getGameMode() == GameMode.SURVIVAL && survivingPlayers > 0) {
-            survivingPlayers--;
-            playerQuitTimestamps.put(player, System.currentTimeMillis()); // 나간 시간 기록
-        }
-        updateBossBar();
-        checkForWinner(); // 우승자 체크
-    }
+
+
     public void startSpectatorParticleTask() {
         new BukkitRunnable() {
             @Override

@@ -11,18 +11,6 @@ public class GameEventListener implements Listener {
     public GameEventListener(WorldBorderController controller) {
         this.controller = controller;
     }
-
-    @EventHandler
-    public void onPlayerDeath(PlayerDeathEvent event) {
-        if (controller.isGameRunning()) { // 게임이 진행 중일 때만 처리
-            controller.handlePlayerDeath(event);
-        }
-    }
-
-    @EventHandler
-    public void onPlayerQuit(PlayerQuitEvent event) {
-        if (controller.isGameRunning()) { // 게임이 진행 중일 때만 처리
-            controller.handlePlayerQuit(event);
-        }
-    }
 }
+
+

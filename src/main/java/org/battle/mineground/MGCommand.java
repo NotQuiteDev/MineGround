@@ -5,6 +5,7 @@ import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.boss.BossBar;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -189,6 +190,10 @@ public class MGCommand implements CommandExecutor, Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         Long quitTime = worldBorderController.getPlayerQuitTimestamps().get(player);
+        BossBar bossBar = worldBorderController.getBossBar(); // 보스바 참조
+        if (bossBar != null) {
+            bossBar.addPlayer(player); // 재접속 시 보스바에 추가
+        }
 
         if (quitTime != null && System.currentTimeMillis() - quitTime <= 30 * 1000) {
             // 30초 이내 재접속한 경우
