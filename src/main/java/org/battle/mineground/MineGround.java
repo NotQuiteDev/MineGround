@@ -20,7 +20,7 @@ public class MineGround extends JavaPlugin {
         worldBorderController = new WorldBorderController(this);
         worldBorderController.startSpectatorParticleTask();
         getServer().getPluginManager().registerEvents(new HorseTameListener(this), this);
-
+        getServer().getPluginManager().registerEvents(new ExplosionDamageListener(this), this);
         // GameBossBar 생성 및 이벤트 등록
         gameBossBar = new GameBossBar(this);
         getServer().getPluginManager().registerEvents(gameBossBar, this);

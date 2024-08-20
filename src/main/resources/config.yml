@@ -10,7 +10,11 @@ fire-arrow-radius: 8  # 화염 화살의 반경을 설정
 fire-arrow-duration: 5  # 엔티티가 불에 타는 시간 (초 단위)
 fire-arrow-transform-chance: 0.5  # 마그마 블록으로 변환될 확률 (0.0 ~ 1.0)
 
+explosion-damage-reduction: 0.5
+
 experience: 5345
+
+player-walk-speed: 1.7
 
 
 # The name of the special Elytra

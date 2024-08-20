@@ -126,10 +126,16 @@ public class WorldBorderController implements Listener{
         executePhase(phaseKeys, 0);  // 첫 번째 페이즈부터 시작
 
         int totalPlayers = 0;
+        double speed = plugin.getConfig().getDouble("player-walk-speed", 1.7);  // config에서 플레이어 속도를 가져옴
+
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.getGameMode() == GameMode.SURVIVAL) {
                 totalPlayers++;
                 elytraCommand.giveSpecialElytra(player);
+
+                // Essentials 명령어로 플레이어 속도 설정
+                String command = "speed walk " + speed + " " + player.getName();
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
             }
         }
         survivingPlayers = totalPlayers;
