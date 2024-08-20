@@ -2,6 +2,7 @@ package org.battle.mineground;
 
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
+import org.battle.mineground.elytra.ElytraCommand;
 import org.bukkit.*;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
@@ -43,6 +44,7 @@ public class WorldBorderController implements Listener{
     private BukkitRunnable beamParticleTask;
     private boolean isGameRunning = false;
     private BukkitRunnable fireworkTask;
+    private final ElytraCommand elytraCommand; // ElytraCommand 클래스 참조
 
 
     public boolean isGameRunning() {
@@ -64,6 +66,7 @@ public class WorldBorderController implements Listener{
         this.world = Bukkit.getWorld("world"); // 월드 이름을 필요에 따라 변경하세요
         this.config = plugin.getConfig();
         this.survivingPlayers = Bukkit.getOnlinePlayers().size();
+        this.elytraCommand = new ElytraCommand((MineGround) plugin); // ElytraCommand 인스턴스 생성
     }
 
     private void showTargetLocation() {
@@ -88,6 +91,7 @@ public class WorldBorderController implements Listener{
 
 
 
+
         List<String> phaseKeys = config.getConfigurationSection("").getKeys(false).stream().toList();
         calculateRandomCenter();
         calculateTotalDistance();
@@ -102,6 +106,7 @@ public class WorldBorderController implements Listener{
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.getGameMode() == GameMode.SURVIVAL) {
                 totalPlayers++;
+                elytraCommand.giveSpecialElytra(player);
             }
         }
         survivingPlayers = totalPlayers;
@@ -227,12 +232,14 @@ public class WorldBorderController implements Listener{
     }
 
     private void teleportPlayers() {
+        int yCoordinate = plugin.getConfig().getInt("teleport-y-coordinate");  // Y좌표를 config에서 불러옴
+
         for (Player player : Bukkit.getOnlinePlayers()) {
             double randomX = -313 + rand(25, 475);
             double randomZ = -363 + rand(25, 475);
-            Location randomLocation = new Location(world, randomX, 150, randomZ);
+            Location randomLocation = new Location(world, randomX, yCoordinate, randomZ);
             player.teleport(randomLocation);
-            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 15 * 20, 1)); // 느린 낙하 효과 적용 (15초)
+            //player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 15 * 20, 1)); // 느린 낙하 효과 적용 (15초)
         }
     }
 

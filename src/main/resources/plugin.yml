@@ -9,3 +9,13 @@ commands:
   switcharrow:
     description: Switches the currently held arrow to the next one in the inventory.
     usage: /switcharrow
+  giveelytra:
+    description: Gives the player a special Elytra.
+    usage: /giveelytra
+    permission: mineground.giveelytra
+    permission-message: You do not have permission to use this command.
+
+permissions:
+  mineground.elytra:
+    description: Allows the player to use the /elytra command.
+    default: op  # 기본적으로 오퍼레이터만 명령어를 사용 가능하게 설정

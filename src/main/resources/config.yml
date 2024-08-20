@@ -13,6 +13,24 @@ fire-arrow-transform-chance: 0.5  # 마그마 블록으로 변환될 확률 (0.0
 experience: 5345
 
 
+# The name of the special Elytra
+elytra-name: "&6Special Elytra"
+
+elytra-remove-y: 150  # Elytra가 제거될 Y좌표
+
+# Whether to allow moving the Elytra in the inventory (true/false)
+allow-move: false
+
+# Whether to allow dropping the Elytra (true/false)
+allow-drop: false
+
+# 처음 텔레포트 Y좌표 설정
+teleport-y-coordinate: 600
+
+slow-falling-duration: 10  # 날개 제거후 느린 낙하 지속 시간 (초 단위)
+
+
+
 phase1:
   breaktime: 220
   add: -100
