@@ -1,5 +1,6 @@
-package org.battle.mineground;
+package org.battle.mineground.arrows;
 
+import org.battle.mineground.MineGround;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;

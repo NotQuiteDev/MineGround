@@ -15,6 +15,8 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.Map;
+
 public class MGCommand implements CommandExecutor, Listener {
 
     private final JavaPlugin plugin;
@@ -24,12 +26,15 @@ public class MGCommand implements CommandExecutor, Listener {
     private BukkitRunnable loopTask;
 
     private boolean isCountdownActive = false;  // 타이머 상태 추적
+    // 나간 플레이어와 나간 시간 기록을 위한 맵을 WorldBorderController에서 가져옴
+    private final Map<Player, Long> playerQuitTimestamps;
 
     public MGCommand(JavaPlugin plugin, WorldBorderController worldBorderController) {
         this.plugin = plugin;
         this.worldBorderController = worldBorderController;
         // 이벤트 리스너 등록
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
+        this.playerQuitTimestamps = worldBorderController.getPlayerQuitTimestamps(); // 나간 시간 맵을 가져옴
     }
 
     @Override
@@ -182,12 +187,22 @@ public class MGCommand implements CommandExecutor, Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        if (worldBorderController.isGameRunning()) {
-            Player player = event.getPlayer();
-            player.setGameMode(GameMode.SPECTATOR);
-            player.sendMessage("The game is running, you are now in spectator mode.");
-        } else if (loopEnabled) { // 루프가 활성화된 상태에서 새로운 플레이어가 접속하면 타이머 체크
-            startLoopTask();
+        Player player = event.getPlayer();
+        Long quitTime = worldBorderController.getPlayerQuitTimestamps().get(player);
+
+        if (quitTime != null && System.currentTimeMillis() - quitTime <= 30 * 1000) {
+            // 30초 이내 재접속한 경우
+            worldBorderController.getPlayerQuitTimestamps().remove(player); // 기록 제거
+            worldBorderController.setSurvivingPlayers(worldBorderController.getSurvivingPlayers() + 1); // 생존자 수 복원
+            worldBorderController.updateBossBar(); // 생존자 수 복원 및 보스바 업데이트
+            player.sendMessage("You have rejoined within 30 seconds. You are still a survivor!");
+        } else {
+            if (worldBorderController.isGameRunning()) {
+                player.setGameMode(GameMode.SPECTATOR);
+                player.sendMessage("The game is running, you are now in spectator mode.");
+            } else if (loopEnabled) {
+                startLoopTask();
+            }
         }
     }
 }

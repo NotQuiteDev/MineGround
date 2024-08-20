@@ -19,6 +19,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
+import java.util.HashMap;
+import java.util.Map;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +47,22 @@ public class WorldBorderController implements Listener{
     private boolean isGameRunning = false;
     private BukkitRunnable fireworkTask;
     private final ElytraCommand elytraCommand; // ElytraCommand 클래스 참조
+    private int maxPlayers;
+    // 나간 플레이어와 나간 시간 기록을 위한 맵
+    private final Map<Player, Long> playerQuitTimestamps = new HashMap<>();
+
+    // 생존자 수 접근자 메서드 (Getter and Setter)
+    public int getSurvivingPlayers() {
+        return survivingPlayers;
+    }
+
+    public void setSurvivingPlayers(int survivingPlayers) {
+        this.survivingPlayers = survivingPlayers;
+    }
+    // 플레이어 나간 시간 기록을 위한 맵 접근자 메서드
+    public Map<Player, Long> getPlayerQuitTimestamps() {
+        return playerQuitTimestamps;
+    }
 
 
     public boolean isGameRunning() {
@@ -110,9 +128,10 @@ public class WorldBorderController implements Listener{
             }
         }
         survivingPlayers = totalPlayers;
+        maxPlayers = totalPlayers; // 게임 시작 시 고정된 최대 플레이어 수
 
         // 보스바 초기화
-        bossBar = Bukkit.createBossBar("Survivors: " + survivingPlayers + "/" + totalPlayers, BarColor.GREEN, BarStyle.SOLID);
+        bossBar = Bukkit.createBossBar("Survivors: " + survivingPlayers + "/" + maxPlayers, BarColor.GREEN, BarStyle.SOLID);
         bossBar.setVisible(true);
 
         // 모든 플레이어를 보스바에 추가
@@ -163,17 +182,16 @@ public class WorldBorderController implements Listener{
         Player player = event.getPlayer();
         if (player.getGameMode() == GameMode.SURVIVAL && survivingPlayers > 0) {
             survivingPlayers--;
+            playerQuitTimestamps.put(player, System.currentTimeMillis()); // 나간 시간 기록
         }
 
         updateBossBar();
-
-        // mg check 명령어 실행
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mg check");
     }
-    private void updateBossBar() {
-        int totalPlayers = Bukkit.getOnlinePlayers().size();
-        double progress = (double) survivingPlayers / totalPlayers;
-        bossBar.setTitle("Survivors: " + survivingPlayers + "/" + totalPlayers);
+
+    public void updateBossBar() {
+        double progress = (double) survivingPlayers / maxPlayers; // 고정된 최대 플레이어 수를 사용
+        bossBar.setTitle("Survivors: " + survivingPlayers + "/" + maxPlayers);
         bossBar.setProgress(progress);
 
         // 보스바 색상 업데이트 (예: 생존자가 적을수록 색상 변경)
@@ -533,6 +551,7 @@ public class WorldBorderController implements Listener{
         Player player = event.getPlayer();
         if (player.getGameMode() == GameMode.SURVIVAL && survivingPlayers > 0) {
             survivingPlayers--;
+            playerQuitTimestamps.put(player, System.currentTimeMillis()); // 나간 시간 기록
         }
         updateBossBar();
         checkForWinner(); // 우승자 체크
