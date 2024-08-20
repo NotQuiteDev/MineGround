@@ -45,6 +45,7 @@ public class MineGround extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new WaterBreathing3ArrowListener(this), this);
         getServer().getPluginManager().registerEvents(new WaterBreathing4ArrowListener(this), this);
         getServer().getPluginManager().registerEvents(new WaterBreathing5ArrowListener(this), this);
+
     }
 
     public double getExplosionRadius() {

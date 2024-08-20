@@ -19,12 +19,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
-import java.util.HashMap;
-import java.util.Map;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class WorldBorderController implements Listener{
 
@@ -49,7 +45,9 @@ public class WorldBorderController implements Listener{
     private final ElytraCommand elytraCommand; // ElytraCommand 클래스 참조
     private int maxPlayers;
     // 나간 플레이어와 나간 시간 기록을 위한 맵
-    private final Map<Player, Long> playerQuitTimestamps = new HashMap<>();
+    private final Map<UUID, Long> playerQuitTimestamps = new HashMap<>();
+    private final Map<UUID, Integer> quitTimers = new HashMap<>();  // 각 플레이어의 타이머 ID 저장
+
 
     private BossBar bossBar1;
 
@@ -67,7 +65,7 @@ public class WorldBorderController implements Listener{
         this.survivingPlayers = survivingPlayers;
     }
     // 플레이어 나간 시간 기록을 위한 맵 접근자 메서드
-    public Map<Player, Long> getPlayerQuitTimestamps() {
+    public Map<UUID, Long> getPlayerQuitTimestamps() {
         return playerQuitTimestamps;
     }
 
@@ -182,19 +180,33 @@ public class WorldBorderController implements Listener{
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        if (!isGameRunning) {
-            return; // 게임이 진행 중이 아니면 아무것도 하지 않음
-        }
-
         Player player = event.getPlayer();
+        UUID playerUUID = player.getUniqueId();
+
+        // 플레이어가 서바이벌 모드일 경우 처리
         if (player.getGameMode() == GameMode.SURVIVAL && survivingPlayers > 0) {
             survivingPlayers--;
-            playerQuitTimestamps.put(player, System.currentTimeMillis()); // 나간 시간 기록
+            playerQuitTimestamps.put(playerUUID, System.currentTimeMillis()); // 나간 시간 기록
+
+            // 기존 타이머가 있다면 취소
+            if (quitTimers.containsKey(playerUUID)) {
+                Bukkit.getScheduler().cancelTask(quitTimers.get(playerUUID));  // 기존 타이머 취소
+            }
+
+            // 새로운 30초 타이머 설정
+            int taskId = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                playerQuitTimestamps.remove(playerUUID);  // 30초 후 기록 제거
+                quitTimers.remove(playerUUID);  // 타이머 ID 제거
+            }, 30 * 20L).getTaskId();  // 30초 후 실행 (20L = 1초)
+
+            // 타이머 ID 저장
+            quitTimers.put(playerUUID, taskId);
         }
 
-        updateBossBar();
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mg check");
+        updateBossBar();  // 보스바 업데이트
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mg check");  // mg check 명령어 실행
     }
+
 
     public void updateBossBar() {
         double progress = (double) survivingPlayers / maxPlayers; // 고정된 최대 플레이어 수를 사용
@@ -556,7 +568,7 @@ public class WorldBorderController implements Listener{
                     // 플레이어가 관전 모드인 경우 파티클을 생성
                     if (player.getGameMode() == GameMode.SPECTATOR) {
                         // 파티클 수를 줄이고 Y축을 1 높임, 더 자주 생성
-                        player.getWorld().spawnParticle(Particle.END_ROD, player.getLocation().add(0, 1, 0), 2, 0.3, 0.3, 0.3, 0.05);
+                        player.getWorld().spawnParticle(Particle.END_ROD, player.getLocation().add(0, 1, 0), 1, 0.05, 0.05, 0.05, 0.02);
                     }
                 }
             }

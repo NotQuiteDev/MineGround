@@ -17,6 +17,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Map;
+import java.util.UUID;
 
 public class MGCommand implements CommandExecutor, Listener {
 
@@ -28,14 +29,11 @@ public class MGCommand implements CommandExecutor, Listener {
 
     private boolean isCountdownActive = false;  // 타이머 상태 추적
     // 나간 플레이어와 나간 시간 기록을 위한 맵을 WorldBorderController에서 가져옴
-    private final Map<Player, Long> playerQuitTimestamps;
-
     public MGCommand(JavaPlugin plugin, WorldBorderController worldBorderController) {
         this.plugin = plugin;
         this.worldBorderController = worldBorderController;
         // 이벤트 리스너 등록
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
-        this.playerQuitTimestamps = worldBorderController.getPlayerQuitTimestamps(); // 나간 시간 맵을 가져옴
     }
 
     @Override
@@ -58,8 +56,8 @@ public class MGCommand implements CommandExecutor, Listener {
                 }
                 return true;
             } else if (args[0].equalsIgnoreCase("stop")) {
-                    worldBorderController.stopGame();  // 게임 중지
-                    sender.sendMessage("World border adjustment stopped.");
+                worldBorderController.stopGame();  // 게임 중지
+                sender.sendMessage("World border adjustment stopped.");
 
                 return true;
             } else if (args[0].equalsIgnoreCase("reload")) {
@@ -112,6 +110,7 @@ public class MGCommand implements CommandExecutor, Listener {
         }
         return false;
     }
+
     private void startLoopTask() {
         loopTask = new BukkitRunnable() {
             @Override
@@ -129,6 +128,7 @@ public class MGCommand implements CommandExecutor, Listener {
 
         loopTask.runTaskTimer(plugin, 0L, 20L); // 매 1초마다 실행
     }
+
     private void startCountdown() {
         isCountdownActive = true;
         int countdown = 60;
@@ -171,8 +171,6 @@ public class MGCommand implements CommandExecutor, Listener {
                 }
 
 
-
-
                 timeLeft--;
             }
         }.runTaskTimer(plugin, 0L, 20L); // 매 1초마다 실행
@@ -189,23 +187,51 @@ public class MGCommand implements CommandExecutor, Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        Long quitTime = worldBorderController.getPlayerQuitTimestamps().get(player);
-        BossBar bossBar = worldBorderController.getBossBar(); // 보스바 참조
-        if (bossBar != null) {
-            bossBar.addPlayer(player); // 재접속 시 보스바에 추가
-        }
+        UUID playerUUID = player.getUniqueId();
+        Long quitTime = worldBorderController.getPlayerQuitTimestamps().get(playerUUID);
 
-        if (quitTime != null && System.currentTimeMillis() - quitTime <= 30 * 1000) {
-            // 30초 이내 재접속한 경우
-            worldBorderController.getPlayerQuitTimestamps().remove(player); // 기록 제거
-            worldBorderController.setSurvivingPlayers(worldBorderController.getSurvivingPlayers() + 1); // 생존자 수 복원
-            worldBorderController.updateBossBar(); // 생존자 수 복원 및 보스바 업데이트
-            player.sendMessage("You have rejoined within 30 seconds. You are still a survivor!");
-        } else {
-            if (worldBorderController.isGameRunning()) {
+        Bukkit.getLogger().info("Player " + player.getName() + " joined. Quit time: " + quitTime);
+
+        // 현재 생존자 수를 직접 계산
+        int currentSurvivingPlayers = (int) Bukkit.getOnlinePlayers().stream()
+                .filter(p -> p.getGameMode() == GameMode.SURVIVAL)
+                .count();
+
+        worldBorderController.setSurvivingPlayers(currentSurvivingPlayers);  // 직접 계산된 값 설정
+
+        // 게임이 진행 중일 때만 보스바 업데이트 및 추가 작업 진행
+        if (worldBorderController.isGameRunning()) {
+            worldBorderController.updateBossBar();  // 보스바 업데이트
+
+            if (quitTime != null && System.currentTimeMillis() - quitTime <= 30 * 1000) {
+                Bukkit.getLogger().info("Player rejoined within 30 seconds.");
+                player.sendMessage("You have rejoined within 30 seconds. You are still a survivor!");
+                player.setGameMode(GameMode.SURVIVAL);
+
+                // BossBar에 플레이어 추가
+                BossBar bossBar = worldBorderController.getBossBar();
+                if (bossBar != null) {
+                    bossBar.addPlayer(player);
+                }
+
+                // 30초 후에 quitTime 기록을 삭제
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    worldBorderController.getPlayerQuitTimestamps().remove(playerUUID);
+                    Bukkit.getLogger().info("Player " + player.getName() + "'s quit time has been removed after 30 seconds.");
+                }, 30 * 20L); // 30초 후 실행 (20L = 1초)
+            } else {
                 player.setGameMode(GameMode.SPECTATOR);
                 player.sendMessage("The game is running, you are now in spectator mode.");
-            } else if (loopEnabled) {
+
+                // BossBar에 관전 모드 플레이어 추가
+                BossBar bossBar = worldBorderController.getBossBar();
+                if (bossBar != null) {
+                    bossBar.addPlayer(player);
+                }
+            }
+        } else {
+            // 게임이 진행 중이지 않으면 loop 작업 실행
+            if (loopEnabled) {
                 startLoopTask();
             }
         }
