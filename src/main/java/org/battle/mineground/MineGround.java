@@ -5,6 +5,8 @@ import org.battle.mineground.arrow_switcher.BowActionListener;
 import org.battle.mineground.arrows.*;
 import org.battle.mineground.elytra.ElytraCommand;
 import org.battle.mineground.elytra.ElytraListener;
+import org.battle.mineground.enchant.EnchantCombiner;
+import org.battle.mineground.enchant.EnchantInventoryListener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class MineGround extends JavaPlugin {
@@ -19,13 +21,14 @@ public class MineGround extends JavaPlugin {
         explosionRadius = getConfig().getDouble("explosion-radius", 2.0);
         worldBorderController = new WorldBorderController(this);
         worldBorderController.startSpectatorParticleTask();
+        EnchantCombiner enchantCombiner = new EnchantCombiner();
         getServer().getPluginManager().registerEvents(new HorseTameListener(this), this);
         getServer().getPluginManager().registerEvents(new ExplosionDamageListener(this), this);
         // GameBossBar 생성 및 이벤트 등록
         gameBossBar = new GameBossBar(this);
         getServer().getPluginManager().registerEvents(gameBossBar, this);
         getServer().getPluginManager().registerEvents(new ElytraListener(this), this);
-
+        getServer().getPluginManager().registerEvents(new EnchantInventoryListener(enchantCombiner), this);
         // MGCommand 클래스의 인스턴스를 생성하고 명령어로 등록
         MGCommand mgCommand = new MGCommand(this, worldBorderController);
         getCommand("switcharrow").setExecutor(new ArrowSwitcherCommand());
