@@ -32,15 +32,37 @@ public class EnchantCombiner {
         EnchantmentStorageMeta meta1 = (EnchantmentStorageMeta) book1.getItemMeta();
         EnchantmentStorageMeta meta2 = (EnchantmentStorageMeta) book2.getItemMeta();
 
-        // 책끼리 합칠 수 있는지 확인 (동일한 인챈트가 있는지 확인)
+        boolean canCombine = false;
+
+        // 첫 번째 책의 인챈트 확인
         for (Map.Entry<Enchantment, Integer> entry : meta1.getStoredEnchants().entrySet()) {
             Enchantment enchantment = entry.getKey();
-            if (meta2.hasStoredEnchant(enchantment)) {
-                // 동일한 인챈트가 있다면 합칠 수 있음
-                return true;
+            int level1 = entry.getValue();
+            int level2 = meta2.getStoredEnchantLevel(enchantment);
+
+            // 같은 인챈트가 있는 경우
+            if (level2 > 0) {
+                // 둘 다 최대 레벨이면 합칠 수 없음
+                if (level1 < enchantment.getMaxLevel() || level2 < enchantment.getMaxLevel()) {
+                    canCombine = true;  // 하나라도 최대 레벨이 아니면 합칠 수 있음
+                }
+            } else {
+                // 같은 인챈트가 없으면 합칠 수 있음
+                canCombine = true;
             }
         }
-        return false;  // 합칠 수 있는 인챈트가 없으면 false 반환
+
+        // 두 번째 책의 인챈트 확인 (중복 방지)
+        for (Map.Entry<Enchantment, Integer> entry : meta2.getStoredEnchants().entrySet()) {
+            Enchantment enchantment = entry.getKey();
+
+            if (!meta1.hasStoredEnchant(enchantment)) {
+                // 첫 번째 책에 없는 인챈트는 합칠 수 있음
+                canCombine = true;
+            }
+        }
+
+        return canCombine;
     }
 
     // 인챈트 가능한 아이템과 인챈트 책을 합치는 메서드
