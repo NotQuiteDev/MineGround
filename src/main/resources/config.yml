@@ -1,3 +1,5 @@
+enchant-success-rate: 70  # 인챈트 성공 확률 (0~100 사이의 값)
+
 explosion-radius: 2.0
 
 lightning-range: 5.0

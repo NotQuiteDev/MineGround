@@ -7,6 +7,7 @@ import org.battle.mineground.elytra.ElytraCommand;
 import org.battle.mineground.elytra.ElytraListener;
 import org.battle.mineground.enchant.EnchantCombiner;
 import org.battle.mineground.enchant.EnchantInventoryListener;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class MineGround extends JavaPlugin {
@@ -14,6 +15,7 @@ public class MineGround extends JavaPlugin {
     private WorldBorderController worldBorderController;
     private GameBossBar gameBossBar;
     private double explosionRadius;
+    private EnchantCombiner enchantCombiner;
     @Override
     public void onEnable() {
         saveDefaultConfig();  // 기본 설정 파일 저장
@@ -21,7 +23,10 @@ public class MineGround extends JavaPlugin {
         explosionRadius = getConfig().getDouble("explosion-radius", 2.0);
         worldBorderController = new WorldBorderController(this);
         worldBorderController.startSpectatorParticleTask();
-        EnchantCombiner enchantCombiner = new EnchantCombiner();
+        // 인챈트 성공 확률을 설정에서 읽어옴
+        int enchantSuccessRate = getConfig().getInt("enchant-success-rate", 70);  // 기본값은 70%
+        // EnchantCombiner 초기화 (성공 확률 전달)
+        enchantCombiner = new EnchantCombiner(enchantSuccessRate);
         getServer().getPluginManager().registerEvents(new HorseTameListener(this), this);
         getServer().getPluginManager().registerEvents(new ExplosionDamageListener(this), this);
         // GameBossBar 생성 및 이벤트 등록
