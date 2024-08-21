@@ -28,28 +28,7 @@ public class EnchantInventoryListener implements Listener {
             Player player = (Player) event.getWhoClicked();  // 이벤트를 발생시킨 플레이어
             Location location = player.getLocation();  // 플레이어 위치
 
-            // 클릭된 아이템이 인챈트 가능한 아이템이고, 커서에 있는 아이템이 인챈트 책인지 확인
-            if (clickedItem != null && cursorItem != null &&
-                    cursorItem.getType() == Material.ENCHANTED_BOOK) {
-
-                // 인챈트 아이템과 인챈트 책을 합성
-                boolean success = enchantCombiner.applyEnchantment(clickedItem, cursorItem);
-
-                // 인챈트가 성공했으면 인챈트 소리 재생 및 책 소모
-                if (success) {
-                    player.getWorld().playSound(location, Sound.BLOCK_ANVIL_USE, 1.0f, 1.0f);  // 인챈트 소리 재생
-                    event.setCurrentItem(clickedItem);  // 인챈트된 아이템 적용
-                    event.setCursor(null);  // 인챈트 성공 시 책 소모
-                } else {
-                    // 인챈트 실패 시 실패 소리 재생
-                    player.getWorld().playSound(location, Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);  // 실패 소리 재생
-                }
-
-                // 인챈트 실패 시 책은 유지됨
-                event.setCancelled(true);
-            }
-
-            // 인챈트 책끼리 합치기
+            // 1. 인챈트 책끼리 합치기
             if (clickedItem != null && cursorItem != null &&
                     clickedItem.getType() == Material.ENCHANTED_BOOK &&
                     cursorItem.getType() == Material.ENCHANTED_BOOK) {
@@ -65,12 +44,35 @@ public class EnchantInventoryListener implements Listener {
                     // 인챈트 소리 재생 (성공)
                     player.getWorld().playSound(location, Sound.BLOCK_ANVIL_USE, 1.0f, 1.0f);  // 인챈트 소리 재생
 
-                    // 기본 클릭 동작 취소
+                    // 이벤트 종료
                     event.setCancelled(true);
+                    return;  // 책끼리 합치기 작업 후 다른 작업이 실행되지 않도록 종료
                 } else {
-                    // 합치기 실패 시 실패 소리 재생 (책이 합쳐지지 않았을 경우)
+                    // 합치기 실패 시 실패 소리 재생
+                    player.getWorld().playSound(location, Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);  // 실패 소리 재생
+                    event.setCancelled(true);
+                    return;  // 실패 시 다른 작업이 실행되지 않도록 종료
+                }
+            }
+
+            // 2. 아이템에 인챈트 적용
+            if (clickedItem != null && cursorItem != null &&
+                    cursorItem.getType() == Material.ENCHANTED_BOOK) {
+
+                // 인챈트 아이템과 인챈트 책을 합성
+                boolean success = enchantCombiner.applyEnchantment(clickedItem, cursorItem);
+
+                if (success) {
+                    player.getWorld().playSound(location, Sound.BLOCK_ANVIL_USE, 1.0f, 1.0f);  // 인챈트 소리 재생
+                    event.setCurrentItem(clickedItem);  // 인챈트된 아이템 적용
+                    event.setCursor(null);  // 인챈트 성공 시 책 소모
+                } else {
+                    // 인챈트 실패 시 실패 소리 재생
                     player.getWorld().playSound(location, Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);  // 실패 소리 재생
                 }
+
+                // 이벤트 종료
+                event.setCancelled(true);
             }
         }
     }
