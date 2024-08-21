@@ -1,6 +1,5 @@
 package org.battle.mineground.enchant;
 
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.ItemStack;
@@ -24,30 +23,20 @@ public class EnchantCombiner {
         return random.nextInt(100) < successRate;  // 성공 여부 반환
     }
 
-    // 인챈트 가능한 아이템과 인챈트 책을 합치는 메서드 (기존 코드)
+    // 인챈트 가능한 아이템과 인챈트 책을 합치는 메서드
     public boolean applyEnchantment(ItemStack item, ItemStack enchantBook) {
-        // 두 번째 아이템이 인챈트 책이어야 함
         if (enchantBook.getType() != Material.ENCHANTED_BOOK) {
             return false; // 인챈트 책이 아니면 실패
         }
 
-        // 인챈트 성공 확률 체크
-        if (!attemptEnchant()) {
-            return false;  // 실패 시 책 소모
-        }
-
-        // 인챈트 책의 메타데이터 가져오기
         EnchantmentStorageMeta bookMeta = (EnchantmentStorageMeta) enchantBook.getItemMeta();
-        boolean appliedAny = false;  // 하나라도 적용되었는지 확인
+        boolean appliedAny = false;
 
-        // 인챈트 책에 저장된 각 인챈트에 대해 적용 가능한지 확인
         for (Map.Entry<Enchantment, Integer> entry : bookMeta.getStoredEnchants().entrySet()) {
             Enchantment enchantment = entry.getKey();
             int bookLevel = entry.getValue();
 
-            // 해당 인챈트가 아이템에 적용 가능한지 확인
             if (enchantment.canEnchantItem(item)) {
-                // 현재 아이템의 인챈트 레벨 확인
                 int currentLevel = item.getEnchantmentLevel(enchantment);
 
                 // 이미 최대 레벨에 도달했는지 확인
@@ -55,7 +44,11 @@ public class EnchantCombiner {
                     continue;  // 해당 인챈트는 이미 최대 레벨이므로 건너뜀
                 }
 
-                // 합산된 레벨 계산
+                // 성공 확률 체크
+                if (!attemptEnchant()) {
+                    return false;  // 인챈트 실패 시 종료
+                }
+
                 int combinedLevel = currentLevel + bookLevel;
 
                 // 합산된 레벨이 해당 인챈트의 최대 레벨을 초과하지 않도록 제한
@@ -73,22 +66,18 @@ public class EnchantCombiner {
         return appliedAny;  // 인챈트가 적용되었는지 여부 반환
     }
 
-    // 인챈트 책끼리 합치는 메서드 (기존 코드)
+    // 인챈트 책끼리 합치는 메서드
     public ItemStack combineEnchantedBooks(ItemStack book1, ItemStack book2) {
-        // 두 아이템 모두 인챈트 책이어야 함
         if (book1.getType() != Material.ENCHANTED_BOOK || book2.getType() != Material.ENCHANTED_BOOK) {
             return null; // 인챈트 책이 아니면 null 반환
         }
 
-        // 두 책의 메타데이터 가져오기
         EnchantmentStorageMeta meta1 = (EnchantmentStorageMeta) book1.getItemMeta();
         EnchantmentStorageMeta meta2 = (EnchantmentStorageMeta) book2.getItemMeta();
 
-        // 새로 합친 인챈트 책 생성
         ItemStack combinedBook = new ItemStack(Material.ENCHANTED_BOOK);
         EnchantmentStorageMeta combinedMeta = (EnchantmentStorageMeta) combinedBook.getItemMeta();
-
-        boolean anyChanges = false;  // 인챈트가 변화했는지 여부 확인
+        boolean anyChanges = false;
 
         // 첫 번째 책의 인챈트를 복사하고, 동일한 인챈트가 있으면 레벨을 합산
         for (Map.Entry<Enchantment, Integer> entry : meta1.getStoredEnchants().entrySet()) {
@@ -96,21 +85,18 @@ public class EnchantCombiner {
             int level1 = entry.getValue();
             int level2 = meta2.getStoredEnchantLevel(enchantment);
 
-            // 합산된 레벨 계산
             int combinedLevel = level1 + level2;
 
-            // 합산된 레벨이 해당 인챈트의 최대 레벨을 초과하지 않도록 제한
             int maxLevel = enchantment.getMaxLevel();
             if (combinedLevel > maxLevel) {
                 combinedLevel = maxLevel;
             }
 
-            // 변화가 있는 경우에만 인챈트 추가
             if (combinedLevel != level1) {
                 combinedMeta.addStoredEnchant(enchantment, combinedLevel, true);
-                anyChanges = true;  // 변화가 있었음을 표시
+                anyChanges = true;
             } else {
-                combinedMeta.addStoredEnchant(enchantment, level1, true);  // 그대로 복사
+                combinedMeta.addStoredEnchant(enchantment, level1, true);
             }
         }
 
@@ -118,16 +104,50 @@ public class EnchantCombiner {
         for (Map.Entry<Enchantment, Integer> entry : meta2.getStoredEnchants().entrySet()) {
             if (!combinedMeta.hasStoredEnchant(entry.getKey())) {
                 combinedMeta.addStoredEnchant(entry.getKey(), entry.getValue(), true);
-                anyChanges = true;  // 변화가 있었음을 표시
+                anyChanges = true;
             }
         }
 
-        // 만약 아무런 변화가 없다면 null 반환 (책이 소모되지 않도록)
+        // 아무 변화가 없다면 null 반환
         if (!anyChanges) {
             return null;
         }
 
+        // 성공 확률 체크
+        if (!attemptEnchant()) {
+            return null;  // 인챈트 실패 시 null 반환
+        }
+
         combinedBook.setItemMeta(combinedMeta);
         return combinedBook;
+    }
+
+    public boolean canApplyEnchantment(ItemStack item, ItemStack enchantBook) {
+        // 인챈트 책이어야 함
+        if (enchantBook.getType() != Material.ENCHANTED_BOOK) {
+            return false;
+        }
+
+        EnchantmentStorageMeta bookMeta = (EnchantmentStorageMeta) enchantBook.getItemMeta();
+        boolean canApply = false;  // 적용 가능한 인챈트가 있는지 여부를 추적
+
+        // 인챈트 책에 저장된 각 인챈트에 대해 적용 가능한지 확인
+        for (Map.Entry<Enchantment, Integer> entry : bookMeta.getStoredEnchants().entrySet()) {
+            Enchantment enchantment = entry.getKey();
+            int bookLevel = entry.getValue();
+
+            // 해당 인챈트가 아이템에 적용 가능한지 확인
+            if (enchantment.canEnchantItem(item)) {
+                // 현재 아이템의 인챈트 레벨 확인
+                int currentLevel = item.getEnchantmentLevel(enchantment);
+
+                // 이미 최대 레벨에 도달하지 않았는지 확인
+                if (currentLevel < enchantment.getMaxLevel()) {
+                    canApply = true;  // 이 인챈트는 적용 가능
+                }
+            }
+        }
+
+        return canApply;  // 하나라도 적용 가능하다면 true 반환
     }
 }

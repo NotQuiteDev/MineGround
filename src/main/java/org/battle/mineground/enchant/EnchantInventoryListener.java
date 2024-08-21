@@ -33,28 +33,28 @@ public class EnchantInventoryListener implements Listener {
                     clickedItem.getType() == Material.ENCHANTED_BOOK &&
                     cursorItem.getType() == Material.ENCHANTED_BOOK) {
 
-                // 성공 확률 계산 (책끼리 합치기에도 적용)
-                boolean success = enchantCombiner.attemptEnchant();  // 성공 여부 확인
+                // 합칠 수 있는지 확인
+                ItemStack combinedBook = enchantCombiner.combineEnchantedBooks(clickedItem, cursorItem);
 
-                if (success) {
-                    // 인챈트 책끼리 합성
-                    ItemStack combinedBook = enchantCombiner.combineEnchantedBooks(clickedItem, cursorItem);
+                if (combinedBook != null) {
+                    // 성공 확률 계산 (합칠 수 있는 경우에만 확률 적용)
+                    boolean success = enchantCombiner.attemptEnchant();
 
-                    if (combinedBook != null) {
+                    if (success) {
                         // 합쳐진 인챈트 책을 클릭된 자리에 적용
                         event.setCurrentItem(combinedBook);
                         event.setCursor(null);  // 손에 들고 있던 책은 사라짐
 
                         // 인챈트 소리 재생 (성공)
-                        player.getWorld().playSound(location, Sound.BLOCK_ANVIL_USE, 1.0f, 1.0f);  // 인챈트 소리 재생
+                        player.getWorld().playSound(location, Sound.BLOCK_ANVIL_USE, 1.0f, 1.0f);
                     } else {
-                        // 변화가 없는 경우 실패 소리 재생
-                        player.getWorld().playSound(location, Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);  // 실패 소리 재생
+                        // 합치기 실패 시 실패 소리 재생
+                        player.getWorld().playSound(location, Sound.BLOCK_ANVIL_DESTROY, 1.0f, 1.0f);
+                        event.setCursor(null);  // 손에 들고 있던 책을 제거
                     }
                 } else {
-                    // 합치기 실패 시 실패 소리 재생 및 책 제거
-                    player.getWorld().playSound(location, Sound.BLOCK_ANVIL_DESTROY, 1.0f, 1.0f);  // 실패 소리 재생
-                    event.setCursor(null);  // 손에 들고 있던 책을 제거
+                    // 합칠 수 없는 경우 실패 소리 재생
+                    player.getWorld().playSound(location, Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
                 }
 
                 // 이벤트 종료
@@ -66,17 +66,27 @@ public class EnchantInventoryListener implements Listener {
             if (clickedItem != null && cursorItem != null &&
                     cursorItem.getType() == Material.ENCHANTED_BOOK) {
 
-                // 인챈트 아이템과 인챈트 책을 합성
-                boolean success = enchantCombiner.applyEnchantment(clickedItem, cursorItem);
+                // 인챈트 아이템과 인챈트 책을 합칠 수 있는지 확인
+                boolean canApply = enchantCombiner.canApplyEnchantment(clickedItem, cursorItem);
 
-                if (success) {
-                    player.getWorld().playSound(location, Sound.BLOCK_ANVIL_USE, 1.0f, 1.0f);  // 인챈트 소리 재생
-                    event.setCurrentItem(clickedItem);  // 인챈트된 아이템 적용
-                    event.setCursor(null);  // 인챈트 성공 시 책 소모
+                if (canApply) {
+                    // 성공 확률 계산 (합칠 수 있는 경우에만 확률 적용)
+                    boolean success = enchantCombiner.attemptEnchant();
+
+                    if (success) {
+                        // 인챈트 아이템 적용
+                        enchantCombiner.applyEnchantment(clickedItem, cursorItem);
+                        player.getWorld().playSound(location, Sound.BLOCK_ANVIL_USE, 1.0f, 1.0f);  // 인챈트 소리 재생
+                        event.setCurrentItem(clickedItem);  // 인챈트된 아이템 적용
+                        event.setCursor(null);  // 인챈트 성공 시 책 소모
+                    } else {
+                        // 인챈트 실패 시 모루 실패 소리 재생 및 책 제거
+                        player.getWorld().playSound(location, Sound.BLOCK_ANVIL_DESTROY, 1.0f, 1.0f);
+                        event.setCursor(null);  // 손에 들고 있던 책을 제거
+                    }
                 } else {
-                    // 인챈트 실패 시 모루 실패 소리 재생 및 책 제거
-                    player.getWorld().playSound(location, Sound.BLOCK_ANVIL_DESTROY, 1.0f, 1.0f);  // 실패 소리 재생
-                    event.setCursor(null);  // 손에 들고 있던 책을 제거
+                    // 인챈트를 적용할 수 없는 경우 실패 소리 재생
+                    player.getWorld().playSound(location, Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
                 }
 
                 // 이벤트 종료
