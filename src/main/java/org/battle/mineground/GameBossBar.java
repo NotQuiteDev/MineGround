@@ -19,19 +19,25 @@ public class GameBossBar implements Listener {
 
     public GameBossBar(JavaPlugin plugin) {
         this.plugin = plugin;
-        this.totalPlayers = Math.max(1, Bukkit.getOnlinePlayers().size());  // 플레이어 수가 0일 경우 1로 설정
-        this.survivingPlayers = totalPlayers;
 
-        // 보스바 생성 및 초기화
-        bossBar = Bukkit.createBossBar("Survivors: " + survivingPlayers + "/" + totalPlayers, BarColor.GREEN, BarStyle.SOLID);
+        // 이미 보스바가 존재하는지 확인하고, 중복 생성 방지
+        if (Bukkit.getBossBars().hasNext()) {
+            bossBar = Bukkit.getBossBars().next();  // 이미 존재하는 보스바를 재사용
+        } else {
+            this.totalPlayers = Math.max(1, Bukkit.getOnlinePlayers().size());  // 플레이어 수가 0일 경우 1로 설정
+            this.survivingPlayers = totalPlayers;
 
-        // 모든 플레이어에게 보스바 표시
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            bossBar.addPlayer(player);
+            // 보스바 생성 및 초기화
+            bossBar = Bukkit.createBossBar("Survivors: " + survivingPlayers + "/" + totalPlayers, BarColor.GREEN, BarStyle.SOLID);
+
+            // 모든 플레이어에게 보스바 표시
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                bossBar.addPlayer(player);
+            }
+
+            // 보스바 진행 상태 초기화
+            updateBossBar();
         }
-
-        // 보스바 진행 상태 초기화
-        updateBossBar();
     }
 
     // 플레이어 사망 이벤트 처리
@@ -68,6 +74,9 @@ public class GameBossBar implements Listener {
 
     // 보스바 제거 메서드
     public void removeBossBar() {
-        bossBar.removeAll(); // 모든 플레이어에서 보스바 제거
+        if (bossBar != null) {
+            bossBar.removeAll(); // 모든 플레이어에서 보스바 제거
+            bossBar = null;  // 보스바 참조를 null로 설정하여 중복 제거 방지
+        }
     }
 }

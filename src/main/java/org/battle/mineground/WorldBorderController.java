@@ -113,8 +113,6 @@ public class WorldBorderController implements Listener{
 
 
 
-
-
         List<String> phaseKeys = config.getConfigurationSection("").getKeys(false).stream().toList();
         calculateRandomCenter();
         calculateTotalDistance();

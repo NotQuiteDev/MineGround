@@ -10,6 +10,8 @@ import org.bukkit.event.entity.PotionSplashEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import java.util.List;
+
 public class HasteArrowListener implements Listener {
 
     private final MineGround plugin;
@@ -26,13 +28,16 @@ public class HasteArrowListener implements Listener {
 
             // 화살에 적용된 Potion NBT 확인
             if (arrow.hasCustomEffects()) {
-                arrow.getCustomEffects().forEach(effect -> {
-                    if (effect.getType().equals(PotionEffectType.FAST_DIGGING) && effect.getAmplifier() == 2) {
-                        // Haste III 적용된 화살이 땅에 박히면 폭발
-                        arrow.getWorld().createExplosion(arrow.getLocation(), (float) plugin.getExplosionRadius());
-                        arrow.remove();  // 화살 제거
-                    }
-                });
+                List<PotionEffect> effects = arrow.getCustomEffects(); // 화살의 커스텀 효과 가져오기
+                if (effects != null) {
+                    effects.forEach(effect -> {
+                        if (effect.getType().equals(PotionEffectType.FAST_DIGGING) && effect.getAmplifier() == 2) {
+                            // Haste III 적용된 화살이 땅에 박히면 폭발
+                            arrow.getWorld().createExplosion(arrow.getLocation(), (float) plugin.getExplosionRadius());
+                            arrow.remove();  // 화살 제거
+                        }
+                    });
+                }
             }
         }
     }

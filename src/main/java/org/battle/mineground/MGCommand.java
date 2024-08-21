@@ -60,10 +60,10 @@ public class MGCommand implements CommandExecutor, Listener {
                 sender.sendMessage("World border adjustment stopped.");
 
                 return true;
-            } else if (args[0].equalsIgnoreCase("reload")) {
-                plugin.reloadConfig();
+            } else if (args.length > 0 && args[0].equalsIgnoreCase("reload")) {
                 if (plugin instanceof MineGround) {
-                    ((MineGround) plugin).loadConfigValues();
+                    MineGround mineGround = (MineGround) plugin;
+                    mineGround.reloadPlugin();  // 플러그인 리로드 처리
                 }
                 sender.sendMessage("Configuration reloaded!");
                 return true;

@@ -23,10 +23,36 @@ public class EnchantCombiner {
         return random.nextInt(100) < successRate;  // 성공 여부 반환
     }
 
+    // 두 인챈트 책을 합칠 수 있는지 여부를 판단하는 메서드 (성공 확률이 아닌 실제 가능 여부만 판단)
+    public boolean canCombineEnchantedBooks(ItemStack book1, ItemStack book2) {
+        if (book1.getType() != Material.ENCHANTED_BOOK || book2.getType() != Material.ENCHANTED_BOOK) {
+            return false;
+        }
+
+        EnchantmentStorageMeta meta1 = (EnchantmentStorageMeta) book1.getItemMeta();
+        EnchantmentStorageMeta meta2 = (EnchantmentStorageMeta) book2.getItemMeta();
+
+        // 책끼리 합칠 수 있는지 확인 (동일한 인챈트가 있는지 확인)
+        for (Map.Entry<Enchantment, Integer> entry : meta1.getStoredEnchants().entrySet()) {
+            Enchantment enchantment = entry.getKey();
+            if (meta2.hasStoredEnchant(enchantment)) {
+                // 동일한 인챈트가 있다면 합칠 수 있음
+                return true;
+            }
+        }
+        return false;  // 합칠 수 있는 인챈트가 없으면 false 반환
+    }
+
     // 인챈트 가능한 아이템과 인챈트 책을 합치는 메서드
     public boolean applyEnchantment(ItemStack item, ItemStack enchantBook) {
         if (enchantBook.getType() != Material.ENCHANTED_BOOK) {
-            return false; // 인챈트 책이 아니면 실패
+            return false;  // 인챈트 책이 아니면 실패
+        }
+
+        // 성공 여부를 한 번만 체크
+        boolean success = attemptEnchant();
+        if (!success) {
+            return false;  // 전체 인챈트 작업 실패
         }
 
         EnchantmentStorageMeta bookMeta = (EnchantmentStorageMeta) enchantBook.getItemMeta();
@@ -40,31 +66,25 @@ public class EnchantCombiner {
                 int currentLevel = item.getEnchantmentLevel(enchantment);
 
                 // 이미 최대 레벨에 도달했는지 확인
-                if (currentLevel >= enchantment.getMaxLevel()) {
-                    continue;  // 해당 인챈트는 이미 최대 레벨이므로 건너뜀
+                if (currentLevel < enchantment.getMaxLevel()) {
+                    int combinedLevel = currentLevel + bookLevel;
+
+                    // 합산된 레벨이 해당 인챈트의 최대 레벨을 초과하지 않도록 제한
+                    int maxLevel = enchantment.getMaxLevel();
+                    if (combinedLevel > maxLevel) {
+                        combinedLevel = maxLevel;
+                    }
+
+                    // 새로운 레벨로 인챈트 추가
+                    item.addEnchantment(enchantment, combinedLevel);
+                    appliedAny = true;  // 적어도 하나의 인챈트가 적용되었음을 표시
                 }
-
-                // 성공 확률 체크
-                if (!attemptEnchant()) {
-                    return false;  // 인챈트 실패 시 종료
-                }
-
-                int combinedLevel = currentLevel + bookLevel;
-
-                // 합산된 레벨이 해당 인챈트의 최대 레벨을 초과하지 않도록 제한
-                int maxLevel = enchantment.getMaxLevel();
-                if (combinedLevel > maxLevel) {
-                    combinedLevel = maxLevel;
-                }
-
-                // 새로운 레벨로 인챈트 추가
-                item.addEnchantment(enchantment, combinedLevel);
-                appliedAny = true;  // 적어도 하나의 인챈트가 적용되었음을 표시
             }
         }
 
-        return appliedAny;  // 인챈트가 적용되었는지 여부 반환
+        return appliedAny;  // 적어도 하나의 인챈트가 적용되었는지 여부 반환
     }
+
 
     // 인챈트 책끼리 합치는 메서드
     public ItemStack combineEnchantedBooks(ItemStack book1, ItemStack book2) {
@@ -149,5 +169,34 @@ public class EnchantCombiner {
         }
 
         return canApply;  // 하나라도 적용 가능하다면 true 반환
+    }
+
+    public String getInapplicableReason(ItemStack item, ItemStack enchantBook) {
+        if (enchantBook.getType() != Material.ENCHANTED_BOOK) {
+            return "이 아이템은 인챈트 책이 아닙니다.";
+        }
+
+        EnchantmentStorageMeta bookMeta = (EnchantmentStorageMeta) enchantBook.getItemMeta();
+        boolean atLeastOneApplicable = false;
+
+        for (Map.Entry<Enchantment, Integer> entry : bookMeta.getStoredEnchants().entrySet()) {
+            Enchantment enchantment = entry.getKey();
+            int bookLevel = entry.getValue();
+
+            if (enchantment.canEnchantItem(item)) {
+                int currentLevel = item.getEnchantmentLevel(enchantment);
+
+                // 이미 최대 레벨에 도달하지 않았는지 확인
+                if (currentLevel < enchantment.getMaxLevel()) {
+                    atLeastOneApplicable = true;  // 적어도 하나는 적용 가능
+                }
+            }
+        }
+
+        if (!atLeastOneApplicable) {
+            return "모든 인챈트가 이미 최대 레벨에 도달했거나, 이 아이템에 적용할 수 없습니다.";
+        }
+
+        return null;  // 적어도 하나의 인챈트는 적용 가능하므로 null 반환
     }
 }

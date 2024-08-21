@@ -34,7 +34,7 @@ public class ElytraListener implements Listener {
             removeSpecialElytra(player);
         }
     }
-
+//TODO: 나중에 최적화관련 생길시 이거 고쳐야함 언제든지 움직이면 Y좌표 확인하니까
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         ItemStack currentItem = event.getCurrentItem();
