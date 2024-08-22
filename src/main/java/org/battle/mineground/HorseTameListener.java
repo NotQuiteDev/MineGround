@@ -2,6 +2,8 @@ package org.battle.mineground;
 
 import org.bukkit.ChatColor;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
+import org.bukkit.entity.AbstractHorse;
 import org.bukkit.entity.Horse;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.SkeletonHorse;
@@ -16,7 +18,6 @@ public class HorseTameListener implements Listener {
 
     private final Plugin plugin;
 
-    // 생성자를 통해 플러그인 인스턴스를 전달받음
     public HorseTameListener(Plugin plugin) {
         this.plugin = plugin;
     }
@@ -25,44 +26,56 @@ public class HorseTameListener implements Listener {
     public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
         Player player = event.getPlayer();
 
-        // 플레이어가 상호작용한 엔티티가 말 종류인지 확인
-        if (event.getRightClicked() instanceof Horse) {
-            tameHorse(player, (Horse) event.getRightClicked());
-        } else if (event.getRightClicked() instanceof ZombieHorse) {
-            tameZombieHorse(player, (ZombieHorse) event.getRightClicked());
-        } else if (event.getRightClicked() instanceof SkeletonHorse) {
-            tameSkeletonHorse(player, (SkeletonHorse) event.getRightClicked());
+        if (event.getRightClicked() instanceof AbstractHorse) {
+            AbstractHorse horse = (AbstractHorse) event.getRightClicked();
+
+            // 각 타입에 따라 적절한 길들이기 메서드 호출
+            if (horse instanceof Horse) {
+                tameHorse(player, (Horse) horse);
+            } else if (horse instanceof ZombieHorse) {
+                tameZombieHorse(player, (ZombieHorse) horse);
+            } else if (horse instanceof SkeletonHorse) {
+                tameSkeletonHorse(player, (SkeletonHorse) horse);
+            }
         }
     }
 
-    // 일반 말을 길들일 때 호출되는 메서드
     private void tameHorse(Player player, Horse horse) {
         if (!horse.isTamed()) {
             horse.setOwner(player);
             horse.setTamed(true);
+            applySpeedMultiplier(horse);
             sendHorseStats(player, horse);
         }
     }
 
-    // 좀비 말을 길들일 때 호출되는 메서드
     private void tameZombieHorse(Player player, ZombieHorse horse) {
         if (!horse.isTamed()) {
             horse.setOwner(player);
             horse.setTamed(true);
+            applySpeedMultiplier(horse);  // 좀비 말의 속도 수정
             sendZombieHorseStats(player, horse);
         }
     }
 
-    // 스켈레톤 말을 길들일 때 호출되는 메서드
     private void tameSkeletonHorse(Player player, SkeletonHorse horse) {
         if (!horse.isTamed()) {
             horse.setOwner(player);
             horse.setTamed(true);
+            applySpeedMultiplier(horse);  // 스켈레톤 말의 속도 수정
             sendSkeletonHorseStats(player, horse);
         }
     }
 
-    // 일반 말의 능력치를 플레이어에게 메시지로 보내고 화면 중앙에 표시
+    // 속도를 설정하는 메서드 (AbstractHorse 타입을 받아서 공통 처리)
+    private void applySpeedMultiplier(AbstractHorse horse) {
+        AttributeInstance speedAttribute = horse.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED);
+        if (speedAttribute != null) {
+            double walkSpeedMultiplier = plugin.getConfig().getDouble("player-walk-speed", 1.0); // 기본값은 1.0
+            speedAttribute.setBaseValue(speedAttribute.getBaseValue() * walkSpeedMultiplier);
+        }
+    }
+
     private void sendHorseStats(Player player, Horse horse) {
         double speed = horse.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).getBaseValue();
         double jumpStrength = horse.getJumpStrength();
@@ -85,7 +98,6 @@ public class HorseTameListener implements Listener {
         }.runTaskLater(plugin, 10L);
     }
 
-    // 좀비 말의 능력치를 플레이어에게 메시지로 보내고 화면 중앙에 표시
     private void sendZombieHorseStats(Player player, ZombieHorse horse) {
         double speed = horse.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).getBaseValue();
         double jumpStrength = horse.getJumpStrength();
@@ -108,7 +120,6 @@ public class HorseTameListener implements Listener {
         }.runTaskLater(plugin, 10L);
     }
 
-    // 스켈레톤 말의 능력치를 플레이어에게 메시지로 보내고 화면 중앙에 표시
     private void sendSkeletonHorseStats(Player player, SkeletonHorse horse) {
         double speed = horse.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).getBaseValue();
         double jumpStrength = horse.getJumpStrength();

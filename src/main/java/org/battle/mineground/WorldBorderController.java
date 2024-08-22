@@ -316,7 +316,7 @@ public class WorldBorderController implements Listener{
         int breaktime = config.getInt(phaseKey + ".breaktime");
         int add = config.getInt(phaseKey + ".add");
         int shrinktime = config.getInt(phaseKey + ".shrinktime");
-        double damage = config.getDouble(phaseKey + ".damage");
+        double damage = config.getDouble(phaseKey + ".damage"); //데미지는 잠시 안녕
 
         // Break Time 동안의 액션바 메시지
         BukkitRunnable breakTimeTask = new BukkitRunnable() {
