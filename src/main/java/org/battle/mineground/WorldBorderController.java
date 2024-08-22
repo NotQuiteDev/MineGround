@@ -49,7 +49,6 @@ public class WorldBorderController implements Listener{
     private final Map<UUID, Integer> quitTimers = new HashMap<>();  // 각 플레이어의 타이머 ID 저장
 
 
-    private BossBar bossBar1;
 
     // 보스바를 반환하는 메서드 추가
     public BossBar getBossBar() {
@@ -138,7 +137,6 @@ public class WorldBorderController implements Listener{
         }
         survivingPlayers = totalPlayers;
         maxPlayers = totalPlayers; // 게임 시작 시 고정된 최대 플레이어 수
-
         // 보스바 초기화
         bossBar = Bukkit.createBossBar("Survivors: " + survivingPlayers + "/" + maxPlayers, BarColor.GREEN, BarStyle.SOLID);
         bossBar.setVisible(true);
@@ -147,6 +145,7 @@ public class WorldBorderController implements Listener{
         for (Player player : Bukkit.getOnlinePlayers()) {
             bossBar.addPlayer(player);
         }
+
     }
 
     @EventHandler
@@ -174,8 +173,6 @@ public class WorldBorderController implements Listener{
             if (survivingPlayers > 0) {
                 survivingPlayers--;
             }
-
-            updateBossBar();
 
             // mg check 명령어 실행
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mg check");
@@ -207,25 +204,10 @@ public class WorldBorderController implements Listener{
             quitTimers.put(playerUUID, taskId);
         }
 
-        updateBossBar();  // 보스바 업데이트
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mg check");  // mg check 명령어 실행
     }
 
 
-    public void updateBossBar() {
-        double progress = (double) survivingPlayers / maxPlayers; // 고정된 최대 플레이어 수를 사용
-        bossBar.setTitle("Survivors: " + survivingPlayers + "/" + maxPlayers);
-        bossBar.setProgress(progress);
-
-        // 보스바 색상 업데이트 (예: 생존자가 적을수록 색상 변경)
-        if (progress > 0.5) {
-            bossBar.setColor(BarColor.GREEN);
-        } else if (progress > 0.2) {
-            bossBar.setColor(BarColor.YELLOW);
-        } else {
-            bossBar.setColor(BarColor.RED);
-        }
-    }
     private void performAdditionalCommands() {
         // 1. 경험치 설정 (exp set * <경험치>)
         int experience = config.getInt("experience");
@@ -341,10 +323,24 @@ public class WorldBorderController implements Listener{
                 }
 
                 if (remainingBreakTime > 0) {
-                    String actionBarMessage = String.format("Next phase in %d seconds", remainingBreakTime);
-                    for (Player player : Bukkit.getOnlinePlayers()) {
-                        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(actionBarMessage));
+                    // 보스바 메시지 업데이트
+                    String bossBarMessage = String.format("§r§ePhase %d §r§a%d초 후 자기장이 줄어듭니다. §r§f생존: §r%d", index - 18, remainingBreakTime, survivingPlayers);                    bossBar.setTitle(bossBarMessage);
+
+                    // 보스바 진행률 업데이트 (시간이 줄어들수록 보스바의 진행률도 감소)
+                    double progress = (double) remainingBreakTime / breaktime;  // 0.0 ~ 1.0 사이로 계산
+                    bossBar.setProgress(progress);
+
+                    // 남은 시간에 따른 보스바 색상 변화
+                    if (remainingBreakTime > 60) {
+                        bossBar.setColor(BarColor.GREEN);  // 안정적인 상태
+                    } else if (remainingBreakTime > 30) {
+                        bossBar.setColor(BarColor.YELLOW);  // 경고 신호
+                    } else if (remainingBreakTime > 10) {
+                        bossBar.setColor(BarColor.PURPLE);  // 위험 신호
+                    } else {
+                        bossBar.setColor(BarColor.RED);  // 매우 위험한 상태
                     }
+
                     remainingBreakTime--;
                 } else {
                     this.cancel();
@@ -390,13 +386,24 @@ public class WorldBorderController implements Listener{
 
                 if (remainingShrinkTime > 0) {
                     // 진행 상태 계산 (0 ~ 100%)
-                    int progress = (int) ((1 - (double) remainingShrinkTime / shrinktime) * 100);
+                    double progress = 1.0 - (double) remainingShrinkTime / shrinktime;  // 진행 상황을 0.0에서 1.0으로 계산
 
-                    // 경고 메시지에 진행 상태를 추가
-                    String cautionMessage = String.format("§c§lCaution! The border is shrinking! §e(%d%%)", progress);
-                    for (Player player : Bukkit.getOnlinePlayers()) {
-                        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(cautionMessage));
+                    // 보스바 메시지 업데이트 (페이즈와 생존자 수 포함)
+                    String bossBarMessage = String.format("§r§ePhase %d §r§a경계가 수축 중입니다! §r§f생존: §r%d", index - 18, survivingPlayers);
+                    bossBar.setTitle(bossBarMessage);
+
+                    // 보스바 진행률 업데이트 (경계 수축에 따라 증가)
+                    bossBar.setProgress(progress);
+
+                    // 보스바 색상은 진행률에 따라 변경 (점점 더 위험한 색으로)
+                    if (progress < 0.5) {
+                        bossBar.setColor(BarColor.GREEN);  // 초기 안정 상태
+                    } else if (progress < 0.8) {
+                        bossBar.setColor(BarColor.YELLOW);  // 중간 경고
+                    } else {
+                        bossBar.setColor(BarColor.RED);  // 매우 위험한 상태
                     }
+
                     remainingShrinkTime--;
                 } else {
                     this.cancel();

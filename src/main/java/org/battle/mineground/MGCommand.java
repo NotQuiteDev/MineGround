@@ -201,7 +201,6 @@ public class MGCommand implements CommandExecutor, Listener {
 
         // 게임이 진행 중일 때만 보스바 업데이트 및 추가 작업 진행
         if (worldBorderController.isGameRunning()) {
-            worldBorderController.updateBossBar();  // 보스바 업데이트
 
             if (quitTime != null && System.currentTimeMillis() - quitTime <= 30 * 1000) {
                 Bukkit.getLogger().info("Player rejoined within 30 seconds.");

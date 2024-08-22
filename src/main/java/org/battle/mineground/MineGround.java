@@ -14,7 +14,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class MineGround extends JavaPlugin {
 
     private WorldBorderController worldBorderController;
-    private GameBossBar gameBossBar;
     private EnchantCombiner enchantCombiner;
     private boolean isReloading = false;  // 리로드 여부를 추적하는 플래그
 
@@ -26,10 +25,6 @@ public class MineGround extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        // 플러그인 종료 시 처리
-        if (gameBossBar != null) {
-            gameBossBar.removeBossBar();  // 보스바 제거
-        }
 
         if (worldBorderController != null) {
             worldBorderController.stopPhases();  // 월드 보더 작업 정리
@@ -56,11 +51,6 @@ public class MineGround extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new HorseTameListener(this), this);
         getServer().getPluginManager().registerEvents(new ExplosionDamageListener(this), this);
 
-        // 보스바는 리로드 중이 아닐 때만 생성
-        if (!isReloading && gameBossBar == null) {
-            gameBossBar = new GameBossBar(this);
-            getServer().getPluginManager().registerEvents(gameBossBar, this);
-        }
 
         getServer().getPluginManager().registerEvents(new ElytraListener(this), this);
         getServer().getPluginManager().registerEvents(new EnchantInventoryListener(enchantCombiner), this);
@@ -92,11 +82,6 @@ public class MineGround extends JavaPlugin {
         HandlerList.unregisterAll(this);
         Bukkit.getScheduler().cancelTasks(this);
 
-        // 보스바 제거
-        if (gameBossBar != null) {
-            gameBossBar.removeBossBar();
-            gameBossBar = null;
-        }
 
         // 설정 다시 로드
         reloadConfig();
