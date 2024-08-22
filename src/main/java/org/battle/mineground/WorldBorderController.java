@@ -303,6 +303,9 @@ public class WorldBorderController implements Listener{
                 .sum();
     }
 
+    // 클래스 필드로 데미지 루프를 관리하는 변수 추가
+    private BukkitRunnable currentDamageTask;
+
     private void executePhase(List<String> phaseKeys, int index) {
         if (!isGameRunning()) {
             return;  // 게임이 진행 중이 아니면 실행하지 않음
@@ -316,11 +319,19 @@ public class WorldBorderController implements Listener{
         int breaktime = config.getInt(phaseKey + ".breaktime");
         int add = config.getInt(phaseKey + ".add");
         int shrinktime = config.getInt(phaseKey + ".shrinktime");
-        double damage = config.getDouble(phaseKey + ".damage"); //데미지는 잠시 안녕
+        double damage = config.getDouble(phaseKey + ".damage");  // config에서 데미지 값 불러오기
+
+        // 기존 데미지 루프가 실행 중이라면 취소
+        if (currentDamageTask != null && !currentDamageTask.isCancelled()) {
+            currentDamageTask.cancel();
+        }
+
+        // 새로운 데미지 루프 시작
+        currentDamageTask = applyBorderDamage(damage);
 
         // Break Time 동안의 액션바 메시지
         BukkitRunnable breakTimeTask = new BukkitRunnable() {
-            int remainingBreakTime = breaktime - shrinktime; // Shrink Time과 겹치는 시간 계산
+            int remainingBreakTime = breaktime - shrinktime;
 
             @Override
             public void run() {
@@ -352,13 +363,17 @@ public class WorldBorderController implements Listener{
             return;  // 게임이 진행 중이 아니면 실행하지 않음
         }
 
-        // 월드보더 크기 조절 명령어 실행
+        // 월드보더 크기 조절 명령어 실행 (기존 로직 유지)
         String command = String.format("worldborder add %d %d", add, shrinktime);
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
 
-        // 월드보더 데미지 설정 명령어 실행
-        String damageCommand = String.format("worldborder damage amount %f", damage);
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), damageCommand);
+        // 기존 데미지 루프가 실행 중이라면 취소
+        if (currentDamageTask != null && !currentDamageTask.isCancelled()) {
+            currentDamageTask.cancel();
+        }
+
+        // 새로운 데미지 루프 시작
+        currentDamageTask = applyBorderDamage(damage);
 
         moveCenter(shrinktime);
 
@@ -393,6 +408,29 @@ public class WorldBorderController implements Listener{
 
         shrinkTimeTask.runTaskTimer(plugin, 0L, 20L); // 1초마다 실행
         tasks.add(shrinkTimeTask);
+    }
+
+    // 월드보더 밖에 있는 플레이어에게 주기적으로 데미지 적용 (config에서 불러온 값 사용)
+    private BukkitRunnable applyBorderDamage(double damagePerSecond) {
+        BukkitRunnable damageTask = new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (!isGameRunning()) {
+                    this.cancel(); // 게임이 중지되면 실행 중인 작업도 취소
+                    return;
+                }
+
+                for (Player player : Bukkit.getOnlinePlayers()) {
+                    WorldBorder border = player.getWorld().getWorldBorder();
+                    if (!border.isInside(player.getLocation())) {
+                        player.damage(damagePerSecond); // 월드보더 밖에 있는 플레이어에게 config에서 불러온 데미지 적용
+                    }
+                }
+            }
+        };
+
+        damageTask.runTaskTimer(plugin, 0L, 20L); // 매초마다 실행
+        return damageTask; // 현재 실행 중인 데미지 작업을 반환
     }
 
     private void moveCenter(int shrinktime) {
