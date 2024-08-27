@@ -652,7 +652,7 @@ public class WorldBorderController implements Listener {
             // 플레이어가 WorldBorder 밖에 있는 경우
             if (distanceX > targetBorderSize / 2 || distanceZ > targetBorderSize / 2) {
                 // showpointer 명령어 실행
-                player.performCommand(String.format("showpointer %.1f 63 %.1f", currentCenterX, currentCenterZ));
+                player.performCommand(String.format("showpointer %.1f 63 %.1f", randomCenterX, randomCenterZ));
             }
         }
     }
