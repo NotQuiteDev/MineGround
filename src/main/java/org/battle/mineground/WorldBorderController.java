@@ -22,7 +22,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
 
-public class WorldBorderController implements Listener{
+public class WorldBorderController implements Listener {
 
     private final JavaPlugin plugin;
     private final World world;
@@ -47,8 +47,8 @@ public class WorldBorderController implements Listener{
     // 나간 플레이어와 나간 시간 기록을 위한 맵
     private final Map<UUID, Long> playerQuitTimestamps = new HashMap<>();
     private final Map<UUID, Integer> quitTimers = new HashMap<>();  // 각 플레이어의 타이머 ID 저장
-
-
+    private double stepX;
+    private double stepZ;
 
     // 보스바를 반환하는 메서드 추가
     public BossBar getBossBar() {
@@ -63,6 +63,7 @@ public class WorldBorderController implements Listener{
     public void setSurvivingPlayers(int survivingPlayers) {
         this.survivingPlayers = survivingPlayers;
     }
+
     // 플레이어 나간 시간 기록을 위한 맵 접근자 메서드
     public Map<UUID, Long> getPlayerQuitTimestamps() {
         return playerQuitTimestamps;
@@ -109,7 +110,6 @@ public class WorldBorderController implements Listener{
         // 게임을 시작하므로 진행 상태를 true로 설정
         isGameRunning = true;
         // 현재 서버에 있는 생존자(서바이벌 모드)의 수를 카운트
-
 
 
         List<String> phaseKeys = config.getConfigurationSection("").getKeys(false).stream().toList();
@@ -303,6 +303,10 @@ public class WorldBorderController implements Listener{
         int shrinktime = config.getInt(phaseKey + ".shrinktime");
         double damage = config.getDouble(phaseKey + ".damage");  // config에서 데미지 값 불러오기
 
+        // 현재 WorldBorder 목표 크기 계산 (500 + 모든 add 값의 합)
+        double targetBorderSize = calculateTargetBorderSize(phaseKeys, index);
+
+
         // 기존 데미지 루프가 실행 중이라면 취소
         if (currentDamageTask != null && !currentDamageTask.isCancelled()) {
             currentDamageTask.cancel();
@@ -324,7 +328,8 @@ public class WorldBorderController implements Listener{
 
                 if (remainingBreakTime > 0) {
                     // 보스바 메시지 업데이트
-                    String bossBarMessage = String.format("§r§ePhase %d §r§a%d초 후 자기장이 줄어듭니다. §r§f생존: §r%d", index - 18, remainingBreakTime, survivingPlayers);                    bossBar.setTitle(bossBarMessage);
+                    String bossBarMessage = String.format("§r§ePhase %d §r§a%d초 후 자기장이 줄어듭니다. §r§f생존: §r%d", index, remainingBreakTime, survivingPlayers);
+                    bossBar.setTitle(bossBarMessage);
 
                     // 보스바 진행률 업데이트 (시간이 줄어들수록 보스바의 진행률도 감소)
                     double progress = (double) remainingBreakTime / breaktime;  // 0.0 ~ 1.0 사이로 계산
@@ -340,6 +345,12 @@ public class WorldBorderController implements Listener{
                     } else {
                         bossBar.setColor(BarColor.RED);  // 매우 위험한 상태
                     }
+
+                    // 플레이어가 WorldBorder 내에 있는지 확인하고, 밖에 있다면 명령어 실행
+                    checkPlayersPosition(targetBorderSize, phaseKeys, index);
+
+                    // 경계에 파티클 생성
+                    createBorderParticles(targetBorderSize, phaseKeys, index);
 
                     remainingBreakTime--;
                 } else {
@@ -367,6 +378,9 @@ public class WorldBorderController implements Listener{
         if (currentDamageTask != null && !currentDamageTask.isCancelled()) {
             currentDamageTask.cancel();
         }
+        // 현재 WorldBorder 목표 크기 계산 (500 + 모든 add 값의 합)
+        double targetBorderSize = calculateTargetBorderSize(phaseKeys, index);
+
 
         // 새로운 데미지 루프 시작
         currentDamageTask = applyBorderDamage(damage);
@@ -389,7 +403,7 @@ public class WorldBorderController implements Listener{
                     double progress = 1.0 - (double) remainingShrinkTime / shrinktime;  // 진행 상황을 0.0에서 1.0으로 계산
 
                     // 보스바 메시지 업데이트 (페이즈와 생존자 수 포함)
-                    String bossBarMessage = String.format("§r§ePhase %d §r§a경계가 수축 중입니다! §r§f생존: §r%d", index - 18, survivingPlayers);
+                    String bossBarMessage = String.format("§r§ePhase %d §r§a경계가 수축 중입니다! §r§f생존: §r%d", index, survivingPlayers);
                     bossBar.setTitle(bossBarMessage);
 
                     // 보스바 진행률 업데이트 (경계 수축에 따라 증가)
@@ -403,6 +417,11 @@ public class WorldBorderController implements Listener{
                     } else {
                         bossBar.setColor(BarColor.RED);  // 매우 위험한 상태
                     }
+
+                    // 플레이어가 WorldBorder 내에 있는지 확인하고, 밖에 있다면 명령어 실행
+                    checkPlayersPosition(targetBorderSize, phaseKeys, index);
+                    // 경계에 파티클 생성
+                    createBorderParticles(targetBorderSize, phaseKeys, index);
 
                     remainingShrinkTime--;
                 } else {
@@ -444,8 +463,8 @@ public class WorldBorderController implements Listener{
         WorldBorder worldBorder = world.getWorldBorder();
 
         // 현재 페이즈에서 이동해야 할 거리 계산
-        double stepX = (totalDistanceX * shrinktime) / totalShrinkTime;
-        double stepZ = (totalDistanceZ * shrinktime) / totalShrinkTime;
+        this.stepX = (totalDistanceX * shrinktime) / totalShrinkTime;
+        this.stepZ = (totalDistanceZ * shrinktime) / totalShrinkTime;
 
         new BukkitRunnable() {
             int ticks = 0;
@@ -493,6 +512,7 @@ public class WorldBorderController implements Listener{
             bossBar = null; // 보스바 참조 제거
         }
     }
+
     public void checkForWinner() {
         if (survivingPlayers == 1) { // 생존자가 1명 남았을 때
             Player winner = null;
@@ -606,6 +626,93 @@ public class WorldBorderController implements Listener{
         }
     }
 
+    // WorldBorder 목표 크기 계산 메소드
+    private double calculateTargetBorderSize(List<String> phaseKeys, int index) {
+        double targetBorderSize = 500;  // 기본 크기 500
+        for (int i = 0; i <= index; i++) {
+            String phaseKey = phaseKeys.get(i);
+            int add = config.getInt(phaseKey + ".add");
+            targetBorderSize += add;  // add 값은 음수로 설정하여 줄어들도록 구현되어야 함
+        }
+        return targetBorderSize;
+    }
+
+// 플레이어가 WorldBorder 내에 있는지 확인하는 메소드
+    private void checkPlayersPosition(double targetBorderSize, List<String> phaseKeys, int currentIndex) {
+        // 현재 월드보더의 실제 중심 좌표 계산
+        double[] currentCenter = calculateCurrentCenter(phaseKeys, currentIndex);
+        double currentCenterX = currentCenter[0];
+        double currentCenterZ = currentCenter[1];
+
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            Location playerLocation = player.getLocation();
+            double distanceX = Math.abs(playerLocation.getX() - currentCenterX);
+            double distanceZ = Math.abs(playerLocation.getZ() - currentCenterZ);
+
+            // 플레이어가 WorldBorder 밖에 있는 경우
+            if (distanceX > targetBorderSize / 2 || distanceZ > targetBorderSize / 2) {
+                // showpointer 명령어 실행
+                player.performCommand(String.format("showpointer %.1f 63 %.1f", currentCenterX, currentCenterZ));
+            }
+        }
+    }
+    // 경계에 파티클 생성 메소드
+// 경계에 파티클 생성 메소드
+// 경계에 파티클 생성 메소드
+    private void createBorderParticles(double targetBorderSize, List<String> phaseKeys, int currentIndex) {
+        World world = Bukkit.getWorld("world");
+        double halfSize = targetBorderSize / 2;
+
+        // 현재 월드보더의 실제 중심 좌표 계산
+        double[] currentCenter = calculateCurrentCenter(phaseKeys, currentIndex);
+        double currentCenterX = currentCenter[0];
+        double currentCenterZ = currentCenter[1];
+
+        // 경계의 네모난 모서리 좌표 계산
+        double minX = currentCenterX - halfSize;
+        double maxX = currentCenterX + halfSize;
+        double minZ = currentCenterZ - halfSize;
+        double maxZ = currentCenterZ + halfSize;
+
+        // 네 변을 따라 파티클 생성 (1블록 간격)
+        for (double x = minX; x <= maxX; x++) {
+            spawnParticleAtHighestBlock(world, x, minZ);
+            spawnParticleAtHighestBlock(world, x, maxZ);
+        }
+        for (double z = minZ; z <= maxZ; z++) {
+            spawnParticleAtHighestBlock(world, minX, z);
+            spawnParticleAtHighestBlock(world, maxX, z);
+        }
+    }
+
+    // 최상단 블록 위에 파티클 생성 메소드
+    private void spawnParticleAtHighestBlock(World world, double x, double z) {
+        // 해당 좌표의 최상단 블록을 찾음
+        Location highestBlockLocation = world.getHighestBlockAt((int) x, (int) z).getLocation().add(0, 1, 0);
+
+        // 해당 위치에 파티클 생성
+        world.spawnParticle(Particle.FLAME, highestBlockLocation, 1, 0, 0, 0, 0);
+    }
+
+// 현재까지 이동한 거리를 계산하는 메소드
+    private double[] calculateCurrentCenter(List<String> phaseKeys, int currentIndex) {
+        // 현재까지의 shrinktime 누적 합 계산
+        int elapsedShrinkTime = 0;
+        for (int i = 0; i <= currentIndex; i++) {
+            String phaseKey = phaseKeys.get(i);
+            elapsedShrinkTime += config.getInt(phaseKey + ".shrinktime");
+        }
+
+        // 이동 비율 계산 (elapsedShrinkTime / totalShrinkTime)
+        double ratio = (double) elapsedShrinkTime / totalShrinkTime;
+
+        // 이동한 거리 계산
+        double currentX = fixedCenterX + (totalDistanceX * ratio);
+        double currentZ = fixedCenterZ + (totalDistanceZ * ratio);
+
+        return new double[]{currentX, currentZ};  // 현재 센터 좌표 반환
+    }
+
 
 
     public void startSpectatorParticleTask() {
@@ -623,6 +730,7 @@ public class WorldBorderController implements Listener{
             }
         }.runTaskTimer(plugin, 0L, 5L); // 매 5틱마다 실행 (0.25초마다)
     }
+
     private int rand(int min, int max) {
         return random.nextInt(max - min + 1) + min;
     }

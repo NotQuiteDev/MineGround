@@ -7,9 +7,11 @@ import org.battle.mineground.elytra.ElytraCommand;
 import org.battle.mineground.elytra.ElytraListener;
 import org.battle.mineground.enchant.EnchantCombiner;
 import org.battle.mineground.enchant.EnchantInventoryListener;
+import org.battle.mineground.pointer.PointerCommandExecutor;
 import org.bukkit.Bukkit;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
+
 
 public class MineGround extends JavaPlugin {
 
@@ -60,6 +62,7 @@ public class MineGround extends JavaPlugin {
         getCommand("switcharrow").setExecutor(new ArrowSwitcherCommand());
         getCommand("giveelytra").setExecutor(new ElytraCommand(this));
         getCommand("mg").setExecutor(mgCommand);
+        getCommand("showpointer").setExecutor(new PointerCommandExecutor(this));
 
         // MGCommand를 이벤트 리스너로 등록
         getServer().getPluginManager().registerEvents(mgCommand, this);
