@@ -5,6 +5,7 @@ import org.battle.mineground.arrow_switcher.BowActionListener;
 import org.battle.mineground.arrows.*;
 import org.battle.mineground.chest.ChestSpawnCommand;
 import org.battle.mineground.chest.ChestSpawner;
+import org.battle.mineground.chest.ItemRegister;
 import org.battle.mineground.elytra.ElytraCommand;
 import org.battle.mineground.elytra.ElytraListener;
 import org.battle.mineground.enchant.EnchantCombiner;
@@ -72,6 +73,12 @@ public class MineGround extends JavaPlugin {
         getServer().getPluginManager().registerEvents(mgCommand, this);
         getServer().getPluginManager().registerEvents(worldBorderController, this); // 이벤트 리스너 등록
         getServer().getPluginManager().registerEvents(new BowActionListener(), this);
+
+        // ItemRegister 명령어 등록
+        ItemRegister itemRegister = new ItemRegister(this);
+        getCommand("registeritem").setExecutor(itemRegister);
+        getCommand("spawnitem").setExecutor(itemRegister);
+        getCommand("spawnitem").setTabCompleter(itemRegister);
 
         // 추가 리스너 등록
         getServer().getPluginManager().registerEvents(new GameEventListener(worldBorderController), this);

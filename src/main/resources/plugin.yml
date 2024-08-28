@@ -21,6 +21,14 @@ commands:
     description: "지정된 구역에 상자를 소환합니다."
     usage: "/spawnchests <region_name>"
     permission: "chestspawn.command"
+  registeritem:
+    description: "현재 손에 든 아이템을 config.yml에 등록합니다."
+    usage: "/registeritem <itemName>"
+    permission: "itemregister.command"
+  spawnitem:
+    description: "config.yml에 등록된 아이템을 소환합니다."
+    usage: "/spawnitem <itemName>"
+    permission: "itemregister.command"
 
 permissions:
   mineground.elytra:
@@ -28,4 +36,7 @@ permissions:
     default: op  # 기본적으로 오퍼레이터만 명령어를 사용 가능하게 설정
   chestspawn.command:
     description: "상자 소환 명령어 사용 권한"
+    default: op
+  itemregister.command:
+    description: "아이템 등록 및 소환 명령어 사용 권한"
     default: op

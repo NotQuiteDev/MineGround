@@ -40,6 +40,75 @@ chestProbability:
   building: 0.001 # 천 블럭당 하나
   busstop: 0.1    # 10 블럭당 하나
 
+chest_contents:
+  categories:
+    guns: 0.2   # guns 카테고리의 총 확률
+    arrows: 0.5 # arrows 카테고리의 총 확률
+    armors: 0.3 # armors 카테고리의 총 확률
+
+  guns: # 총기류 카테고리
+    gun1:
+      probability: 0.4  # 40% 확률
+      item:
+        ==: org.bukkit.inventory.ItemStack
+        type: IRON_SWORD
+        amount: 1
+    gun2:
+      probability: 0.6  # 60% 확률
+      item:
+        ==: org.bukkit.inventory.ItemStack
+        type: CROSSBOW
+        amount: 1
+
+  arrows: # 화살 카테고리
+    arrow1:
+      probability: 0.7  # 70% 확률
+      item:
+        ==: org.bukkit.inventory.ItemStack
+        type: ARROW
+        amount: 16
+    arrow2:
+      probability: 0.3  # 30% 확률
+      item:
+        ==: org.bukkit.inventory.ItemStack
+        type: TIPPED_ARROW
+        amount: 8
+
+  armors: # 아머 카테고리
+    armor1:
+      probability: 0.5  # 50% 확률
+      item:
+        ==: org.bukkit.inventory.ItemStack
+        type: DIAMOND_CHESTPLATE
+        amount: 1
+    armor2:
+      probability: 0.5  # 50% 확률
+      item:
+        ==: org.bukkit.inventory.ItemStack
+        type: IRON_HELMET
+        amount: 1
+
+  dummydata:
+    # 명령어로 등록된 더미 아이템들
+    item1:
+      item: # 직렬화된 아이템 데이터
+        ==: org.bukkit.inventory.ItemStack
+        type: DIAMOND_SWORD
+        amount: 1
+        meta:
+          ==: ItemMeta
+          meta-type: UNSPECIFIC
+          enchants:
+            DAMAGE_ALL: 5
+    item2:
+      item: # 직렬화된 아이템 데이터
+        ==: org.bukkit.inventory.ItemStack
+        type: BOW
+        amount: 1
+        meta:
+          ==: ItemMeta
+          meta-type: UNSPECIFIC
+
 
 phase1:
   breaktime: 220
