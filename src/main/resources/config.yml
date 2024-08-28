@@ -35,6 +35,10 @@ teleport-y-coordinate: 600
 
 slow-falling-duration: 10  # 날개 제거후 느린 낙하 지속 시간 (초 단위)
 
+chestProbability:
+  dungeon: 0.01   # 백 블럭당 하나
+  building: 0.001 # 천 블럭당 하나
+  busstop: 0.1    # 10 블럭당 하나
 
 
 phase1:

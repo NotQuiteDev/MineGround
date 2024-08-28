@@ -3,6 +3,8 @@ package org.battle.mineground;
 import org.battle.mineground.arrow_switcher.ArrowSwitcherCommand;
 import org.battle.mineground.arrow_switcher.BowActionListener;
 import org.battle.mineground.arrows.*;
+import org.battle.mineground.chest.ChestSpawnCommand;
+import org.battle.mineground.chest.ChestSpawner;
 import org.battle.mineground.elytra.ElytraCommand;
 import org.battle.mineground.elytra.ElytraListener;
 import org.battle.mineground.enchant.EnchantCombiner;
@@ -44,7 +46,9 @@ public class MineGround extends JavaPlugin {
     private void registerListenersAndCommands() {
         // WorldBorderController 초기화 및 리스너 등록
         worldBorderController = new WorldBorderController(this);
+
         worldBorderController.startSpectatorParticleTask();
+        ChestSpawner chestSpawner = new ChestSpawner(this);
 
         // 인챈트 성공 확률을 설정에서 읽어옴
         int enchantSuccessRate = getConfig().getInt("enchant-success-rate", 70);  // 기본값은 70%
@@ -63,7 +67,7 @@ public class MineGround extends JavaPlugin {
         getCommand("giveelytra").setExecutor(new ElytraCommand(this));
         getCommand("mg").setExecutor(mgCommand);
         getCommand("showpointer").setExecutor(new PointerCommandExecutor(this));
-
+        getCommand("spawnchests").setExecutor(new ChestSpawnCommand(chestSpawner));
         // MGCommand를 이벤트 리스너로 등록
         getServer().getPluginManager().registerEvents(mgCommand, this);
         getServer().getPluginManager().registerEvents(worldBorderController, this); // 이벤트 리스너 등록

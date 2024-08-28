@@ -17,9 +17,15 @@ commands:
   showpointer:
     description: "특정 좌표를 가리키는 포인터를 생성합니다."
     usage: "/showpointer <x> <y> <z>"
-
+  spawnchests:
+    description: "지정된 구역에 상자를 소환합니다."
+    usage: "/spawnchests <region_name>"
+    permission: "chestspawn.command"
 
 permissions:
   mineground.elytra:
     description: Allows the player to use the /elytra command.
     default: op  # 기본적으로 오퍼레이터만 명령어를 사용 가능하게 설정
+  chestspawn.command:
+    description: "상자 소환 명령어 사용 권한"
+    default: op
