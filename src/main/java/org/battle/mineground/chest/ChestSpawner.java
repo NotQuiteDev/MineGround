@@ -12,7 +12,14 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.Chest;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -99,10 +106,81 @@ public class ChestSpawner {
 
         if (block.getType() == Material.AIR && above1.getType() == Material.AIR && above2.getType() == Material.AIR) {
             block.setType(Material.CHEST);
-            // 아이템 추가 로직 추가 가능
+
+            // 상자에 아이템 추가
+            addItemsToChest(location);
         }
     }
 
+    private void addItemsToChest(Location location) {
+        BlockState state = location.getBlock().getState();
+
+        if (state instanceof Chest) {
+            Chest chest = (Chest) state;
+            List<String> chosenCategories = chooseCategories();
+
+            for (String category : chosenCategories) {
+                ItemStack item = chooseItemFromCategory(category);
+                if (item != null) {
+                    chest.getInventory().addItem(item);
+                }
+            }
+        } else {
+            mineGround.getLogger().warning("상자가 아닌 블록에서 인벤토리를 시도했습니다.");
+        }
+    }
+
+    // 여러 카테고리 선택 가능하게 수정된 메서드
+    private List<String> chooseCategories() {
+        FileConfiguration config = mineGround.getConfig();
+        Map<String, Object> categories = config.getConfigurationSection("chest_contents.categories").getValues(false);
+        List<String> selectedCategories = new ArrayList<>();
+
+        Random random = new Random();
+
+        // 각 카테고리별로 확률을 계산해 선택
+        for (Map.Entry<String, Object> entry : categories.entrySet()) {
+            double probability = (double) entry.getValue();
+            if (random.nextDouble() <= probability) {
+                selectedCategories.add(entry.getKey());
+            }
+        }
+
+        // 최소 한 개의 카테고리 보장
+        if (selectedCategories.isEmpty()) {
+            List<String> categoryList = new ArrayList<>(categories.keySet());
+            selectedCategories.add(categoryList.get(random.nextInt(categoryList.size())));
+        }
+
+        return selectedCategories;
+    }
+
+    // 선택된 카테고리에서 아이템 선택 (카테고리 내에서 하나의 아이템만 선택)
+    private ItemStack chooseItemFromCategory(String category) {
+        FileConfiguration config = mineGround.getConfig();
+        ConfigurationSection categorySection = config.getConfigurationSection("chest_contents." + category);
+
+        if (categorySection != null) {
+            double totalProbability = 0;
+            for (String key : categorySection.getKeys(false)) {
+                totalProbability += categorySection.getConfigurationSection(key).getDouble("probability");
+            }
+
+            double randomValue = new Random().nextDouble() * totalProbability;
+
+            for (String key : categorySection.getKeys(false)) {
+                randomValue -= categorySection.getConfigurationSection(key).getDouble("probability");
+                if (randomValue <= 0) {
+                    // 아이템 데이터를 getItemStack으로 불러옴
+                    return categorySection.getItemStack(key + ".item");
+                }
+            }
+        }
+
+        return null;
+    }
+
+    // 구역 이름에 따른 확률을 설정 파일에서 가져오는 메서드
     private double getProbabilityFromConfig(String regionName) {
         // 구역 이름에서 언더스코어(_)를 기준으로 앞부분 추출
         String baseRegionName = regionName.contains("_") ? regionName.split("_")[0] : regionName;

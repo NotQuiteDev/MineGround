@@ -94,7 +94,6 @@ public class ItemRegister implements TabExecutor {
             return;
         }
 
-        // 이름이 직접 입력되었을 경우 그대로 사용
         if (itemName == null || itemName.isEmpty()) {
             player.sendMessage("아이템 이름을 입력하세요: /registeritem <itemName>");
             return;
@@ -106,9 +105,8 @@ public class ItemRegister implements TabExecutor {
             dummyData = config.createSection("chest_contents.dummydata");
         }
 
-        // 아이템 직렬화 후 저장
-        ConfigurationSection itemSection = dummyData.createSection(itemName);
-        itemSection.set("item", item.serialize());
+        // Bukkit의 set 메서드를 사용해 아이템을 직렬화하여 저장
+        dummyData.set(itemName + ".item", item);
 
         plugin.saveConfig();
         player.sendMessage(itemName + " 아이템이 성공적으로 등록되었습니다.");
@@ -125,48 +123,22 @@ public class ItemRegister implements TabExecutor {
             return;
         }
 
-        // 이름이 직접 입력되었을 경우 그대로 사용
         if (itemName == null || itemName.isEmpty()) {
             player.sendMessage("아이템 이름을 입력하세요: /spawnitem <itemName>");
             return;
         }
 
-        ConfigurationSection itemSection = dummyData.getConfigurationSection(itemName);
-        if (itemSection == null) {
+        // 설정 파일에서 아이템 불러오기
+        ItemStack item = dummyData.getItemStack(itemName + ".item"); // .item 경로에서 불러옴
+
+        if (item == null) {
             player.sendMessage(itemName + " 아이템 데이터를 찾을 수 없습니다.");
             return;
         }
 
-        try {
-            // 아이템 역직렬화
-            ItemStack item = ItemStack.deserialize(itemSection.getConfigurationSection("item").getValues(false));
-
-            // 메타데이터가 존재하는 경우 복원
-            if (itemSection.contains("meta")) {
-                ItemMeta meta = item.getItemMeta();
-                Map<String, Object> metaValues = itemSection.getConfigurationSection("meta").getValues(false);
-                ItemMeta deserializedMeta = (ItemMeta) ConfigurationSerialization.deserializeObject(metaValues, meta.getClass());
-                item.setItemMeta(deserializedMeta);
-
-                // PersistentDataContainer 복원
-                if (itemSection.contains("PublicBukkitValues")) {
-                    ConfigurationSection publicValuesSection = itemSection.getConfigurationSection("PublicBukkitValues");
-                    for (String key : publicValuesSection.getKeys(false)) {
-                        NamespacedKey namespacedKey = NamespacedKey.fromString(key);
-                        int value = publicValuesSection.getInt(key);  // 여기에서는 INT형 예시, 필요시 다른 타입으로 변경
-                        meta.getPersistentDataContainer().set(namespacedKey, PersistentDataType.INTEGER, value);
-                    }
-                    item.setItemMeta(meta);
-                }
-            }
-
-            // 플레이어에게 아이템 지급
-            player.getInventory().addItem(item);
-            player.sendMessage(itemName + " 아이템이 소환되었습니다.");
-        } catch (Exception e) {
-            player.sendMessage("아이템을 소환하는 중 오류가 발생했습니다: " + e.getMessage());
-            e.printStackTrace();
-        }
+        // 플레이어에게 아이템 지급
+        player.getInventory().addItem(item);
+        player.sendMessage(itemName + " 아이템이 소환되었습니다.");
     }
 
     // 명령어 자동 완성 기능
