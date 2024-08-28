@@ -123,6 +123,15 @@ public class ChestSpawner {
                 ItemStack item = chooseItemFromCategory(category);
                 if (item != null) {
                     chest.getInventory().addItem(item);
+
+                    // 아이템에 맞는 탄약 선택
+                    String ammoKey = getAmmoKeyFromItem(category, item);
+                    if (ammoKey != null) {
+                        ItemStack ammo = chooseAmmo(ammoKey);
+                        if (ammo != null) {
+                            chest.getInventory().addItem(ammo);
+                        }
+                    }
                 }
             }
         } else {
@@ -130,48 +139,21 @@ public class ChestSpawner {
         }
     }
 
-    // 여러 카테고리 선택 가능하게 수정된 메서드
-    private List<String> chooseCategories() {
-        FileConfiguration config = mineGround.getConfig();
-        Map<String, Object> categories = config.getConfigurationSection("chest_contents.categories").getValues(false);
-        List<String> selectedCategories = new ArrayList<>();
-
-        Random random = new Random();
-
-        // 각 카테고리별로 확률을 계산해 선택
-        for (Map.Entry<String, Object> entry : categories.entrySet()) {
-            double probability = (double) entry.getValue();
-            if (random.nextDouble() <= probability) {
-                selectedCategories.add(entry.getKey());
-            }
-        }
-
-        // 최소 한 개의 카테고리 보장
-        if (selectedCategories.isEmpty()) {
-            List<String> categoryList = new ArrayList<>(categories.keySet());
-            selectedCategories.add(categoryList.get(random.nextInt(categoryList.size())));
-        }
-
-        return selectedCategories;
-    }
-
-    // 선택된 카테고리에서 아이템 선택 (카테고리 내에서 하나의 아이템만 선택)
+    // 선택된 카테고리에서 아이템 선택
     private ItemStack chooseItemFromCategory(String category) {
         FileConfiguration config = mineGround.getConfig();
         ConfigurationSection categorySection = config.getConfigurationSection("chest_contents." + category);
 
         if (categorySection != null) {
-            double totalProbability = 0;
-            for (String key : categorySection.getKeys(false)) {
-                totalProbability += categorySection.getConfigurationSection(key).getDouble("probability");
-            }
+            double totalProbability = categorySection.getKeys(false).stream()
+                    .mapToDouble(key -> categorySection.getConfigurationSection(key).getDouble("probability"))
+                    .sum();
 
             double randomValue = new Random().nextDouble() * totalProbability;
 
             for (String key : categorySection.getKeys(false)) {
                 randomValue -= categorySection.getConfigurationSection(key).getDouble("probability");
                 if (randomValue <= 0) {
-                    // 아이템 데이터를 getItemStack으로 불러옴
                     return categorySection.getItemStack(key + ".item");
                 }
             }
@@ -180,12 +162,53 @@ public class ChestSpawner {
         return null;
     }
 
+    // 선택된 아이템에 맞는 탄약 키를 반환
+    private String getAmmoKeyFromItem(String category, ItemStack item) {
+        FileConfiguration config = mineGround.getConfig();
+        ConfigurationSection categorySection = config.getConfigurationSection("chest_contents." + category);
+
+        if (categorySection != null) {
+            for (String key : categorySection.getKeys(false)) {
+                ItemStack configuredItem = categorySection.getItemStack(key + ".item");
+                if (configuredItem != null && configuredItem.isSimilar(item)) {
+                    return categorySection.getString(key + ".ammo");
+                }
+            }
+        }
+
+        return null;
+    }
+
+    // ammo 키를 통해 해당 총알을 가져오는 메서드
+    private ItemStack chooseAmmo(String ammoKey) {
+        FileConfiguration config = mineGround.getConfig();
+        return config.getItemStack("chest_contents.ammos." + ammoKey + ".item", null);
+    }
+
+    // 여러 카테고리 선택 가능하게 수정된 메서드
+    private List<String> chooseCategories() {
+        FileConfiguration config = mineGround.getConfig();
+        Map<String, Object> categories = config.getConfigurationSection("chest_contents.categories").getValues(false);
+        List<String> selectedCategories = new ArrayList<>();
+        Random random = new Random();
+
+        categories.forEach((key, value) -> {
+            if (random.nextDouble() <= (double) value) {
+                selectedCategories.add(key);
+            }
+        });
+
+        // 최소 한 개의 카테고리 보장
+        if (selectedCategories.isEmpty()) {
+            selectedCategories.add(categories.keySet().stream().skip(random.nextInt(categories.size())).findFirst().orElse(null));
+        }
+
+        return selectedCategories;
+    }
+
     // 구역 이름에 따른 확률을 설정 파일에서 가져오는 메서드
     private double getProbabilityFromConfig(String regionName) {
-        // 구역 이름에서 언더스코어(_)를 기준으로 앞부분 추출
         String baseRegionName = regionName.contains("_") ? regionName.split("_")[0] : regionName;
-
-        // config.yml에서 앞부분 구역 이름에 해당하는 확률을 읽어옴
         return mineGround.getConfig().getDouble("chestProbability." + baseRegionName, 0.0);
     }
 }
