@@ -61,7 +61,7 @@ public class CustomArrowListener implements Listener {
             }
 
             arrow.setVelocity(player.getLocation().getDirection().multiply(2));
-            player.sendMessage("화살이 발사되었습니다!");
+            //player.sendMessage("화살이 발사되었습니다!");
 
             // 손에 있는 아이템 개수 줄이기
             itemInHand.setAmount(itemInHand.getAmount() - 1);
