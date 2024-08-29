@@ -22,10 +22,10 @@ public class ArrowSwitcherCommand implements CommandExecutor {
         if (sender instanceof Player) {
             Player player = (Player) sender;
 
-            // 오프핸드에 있는 아이템이 화살인지 확인
-            ItemStack offHandItem = player.getInventory().getItemInOffHand();
-            if (!ArrowUtils.isArrow(offHandItem)) {
-                player.sendMessage("You need to hold an arrow in your off-hand.");
+            // 메인 핸드에 있는 아이템이 화살인지 확인
+            ItemStack mainHandItem = player.getInventory().getItemInMainHand();
+            if (!ArrowUtils.isArrow(mainHandItem)) {
+                player.sendMessage("You need to hold an arrow in your main hand.");
                 return true;
             }
 
@@ -39,16 +39,16 @@ public class ArrowSwitcherCommand implements CommandExecutor {
 
     private void switchArrow(Player player) {
         ItemStack[] inventory = player.getInventory().getContents();
-        ItemStack currentArrow = player.getInventory().getItemInOffHand(); // 오프핸드에 있는 화살
+        ItemStack currentArrow = player.getInventory().getItemInMainHand(); // 메인 핸드에 있는 화살
         UUID playerUUID = player.getUniqueId();
 
-        // 인벤토리 내 화살 종류와 위치 수집 (오프핸드 제외)
+        // 인벤토리 내 화살 종류와 위치 수집 (메인 핸드 제외)
         List<Integer> arrowSlots = new ArrayList<>();
-        int offHandSlot = 40; // 오프핸드 슬롯 번호
+        int mainHandSlot = player.getInventory().getHeldItemSlot(); // 메인 핸드 슬롯 번호
 
         for (int i = 0; i < inventory.length; i++) {
             ItemStack item = inventory[i];
-            if (item != null && ArrowUtils.isArrow(item) && i != offHandSlot) {
+            if (item != null && ArrowUtils.isArrow(item) && i != mainHandSlot) {
                 arrowSlots.add(i);
             }
         }
@@ -71,10 +71,10 @@ public class ArrowSwitcherCommand implements CommandExecutor {
         int nextIndex = (lastArrowIndex + 1) % arrowSlots.size();
         int nextSlot = arrowSlots.get(nextIndex);
 
-        // 오프핸드 화살과 인벤토리의 다음 화살 교체
+        // 메인 핸드 화살과 인벤토리의 다음 화살 교체
         ItemStack nextArrow = inventory[nextSlot];
-        player.getInventory().setItem(offHandSlot, nextArrow); // 오프핸드에 새로운 화살 배치
-        player.getInventory().setItem(nextSlot, currentArrow);  // 현재 오프핸드 화살을 인벤토리로 이동
+        player.getInventory().setItem(mainHandSlot, nextArrow); // 메인 핸드에 새로운 화살 배치
+        player.getInventory().setItem(nextSlot, currentArrow);  // 현재 메인 핸드 화살을 인벤토리로 이동
 
         // 교체된 화살의 인덱스를 저장 (이제 교체된 화살이 lastArrow가 됨)
         lastArrowIndexMap.put(playerUUID, nextIndex);

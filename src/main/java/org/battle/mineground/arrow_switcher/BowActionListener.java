@@ -14,8 +14,8 @@ public class BowActionListener implements Listener {
         Player player = event.getPlayer();
         Material itemInHand = player.getInventory().getItemInMainHand().getType();
 
-        // 플레이어가 활 또는 크로스보우를 들고 있는지 확인
-        if (itemInHand == Material.BOW || itemInHand == Material.CROSSBOW) {
+        // 플레이어가 Tipped Arrow를 들고 있는지 확인
+        if (itemInHand == Material.TIPPED_ARROW) {
             // 플레이어가 좌클릭(블록 공격 또는 공기 공격) 했는지 확인
             if (event.getAction() == Action.LEFT_CLICK_BLOCK || event.getAction() == Action.LEFT_CLICK_AIR) {
                 // /switcharrow 명령어 실행

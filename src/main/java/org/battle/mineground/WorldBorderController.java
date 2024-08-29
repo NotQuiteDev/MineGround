@@ -223,7 +223,7 @@ public class WorldBorderController implements Listener {
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), clearCommand);
 
         // 4. 모든 상자 초기화 (lc respawnall)
-        String respawnCommand = "lc respawnall";
+        String respawnCommand = "spawnchests";
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), respawnCommand);
 
         // 5. 모든 플레이어 서바이벌 모드로 변경 (gamemode survival *)
@@ -651,8 +651,10 @@ public class WorldBorderController implements Listener {
 
             // 플레이어가 WorldBorder 밖에 있는 경우
             if (distanceX > targetBorderSize / 2 || distanceZ > targetBorderSize / 2) {
+                if (player.getGameMode() == GameMode.SURVIVAL) {
                 // showpointer 명령어 실행
                 player.performCommand(String.format("showpointer %.1f 63 %.1f", randomCenterX, randomCenterZ));
+                }
             }
         }
     }

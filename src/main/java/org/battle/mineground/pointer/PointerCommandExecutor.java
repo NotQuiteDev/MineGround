@@ -58,15 +58,15 @@ public class PointerCommandExecutor implements CommandExecutor {
 
         // 화살표 줄기 생성 (길이를 1.5로 제한)
         double arrowLength = 1.5;
-        drawArrowShaft(playerLocation, angle, arrowLength);
+        drawArrowShaft(player, playerLocation, angle, arrowLength);
 
         // 화살표 머리 생성 (줄기 끝에 배치)
         Location arrowHeadLocation = playerLocation.clone().add(Math.cos(angle) * arrowLength, 0, Math.sin(angle) * arrowLength);
-        drawArrowHead(arrowHeadLocation, angle);
+        drawArrowHead(player, arrowHeadLocation, angle);
     }
 
     // 화살표의 줄기 부분을 그리는 메소드 (길이를 1.5로 제한)
-    public void drawArrowShaft(Location start, double angle, double length) {
+    public void drawArrowShaft(Player player, Location start, double angle, double length) {
         int points = (int) (length * 5); // 줄기의 길이에 따른 점 개수
         for (int i = 0; i < points; i++) {
             double distance = length * i / points;
@@ -74,12 +74,12 @@ public class PointerCommandExecutor implements CommandExecutor {
             double z = distance * Math.sin(angle);
 
             Location particleLocation = start.clone().add(x, 0, z);
-            start.getWorld().spawnParticle(Particle.FLAME, particleLocation, 0, 0, 0, 0, 0);
+            player.spawnParticle(Particle.FLAME, particleLocation, 0, 0, 0, 0, 0);
         }
     }
 
     // 화살표의 머리 부분을 그리는 메소드 (줄기 끝에 생성)
-    public void drawArrowHead(Location end, double angle) {
+    public void drawArrowHead(Player player, Location end, double angle) {
         double headSize = 0.5; // 화살표 머리 크기
 
         // 화살표 머리의 좌표 계산 (삼각형 모양을 더 세밀하게 구성)
@@ -97,7 +97,7 @@ public class PointerCommandExecutor implements CommandExecutor {
             double rotatedZ = x * Math.sin(angle) + z * Math.cos(angle);
 
             Location particleLocation = end.clone().add(rotatedX, 0, rotatedZ);
-            end.getWorld().spawnParticle(Particle.FLAME, particleLocation, 0, 0, 0, 0, 0);
+            player.spawnParticle(Particle.FLAME, particleLocation, 0, 0, 0, 0, 0);
         }
     }
 }

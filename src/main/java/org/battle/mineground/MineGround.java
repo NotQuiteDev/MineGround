@@ -73,8 +73,7 @@ public class MineGround extends JavaPlugin {
         getServer().getPluginManager().registerEvents(mgCommand, this);
         getServer().getPluginManager().registerEvents(worldBorderController, this); // 이벤트 리스너 등록
         getServer().getPluginManager().registerEvents(new BowActionListener(), this);
-
-        // ItemRegister 명령어 등록
+        getServer().getPluginManager().registerEvents(new CustomArrowListener(this), this);
         ItemRegister itemRegister = new ItemRegister(this);
         getCommand("registeritem").setExecutor(itemRegister);
         getCommand("spawnitem").setExecutor(itemRegister);
