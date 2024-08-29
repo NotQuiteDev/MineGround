@@ -1,5 +1,6 @@
 package org.battle.mineground;
 
+import org.battle.mineground.achievement.AchievementExpansion;
 import org.battle.mineground.arrow_switcher.ArrowSwitcherCommand;
 import org.battle.mineground.arrow_switcher.BowActionListener;
 import org.battle.mineground.arrows.*;
@@ -78,6 +79,10 @@ public class MineGround extends JavaPlugin {
         getCommand("registeritem").setExecutor(itemRegister);
         getCommand("spawnitem").setExecutor(itemRegister);
         getCommand("spawnitem").setTabCompleter(itemRegister);
+
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            new AchievementExpansion(this).register();
+        }
 
         // 추가 리스너 등록
         getServer().getPluginManager().registerEvents(new GameEventListener(worldBorderController), this);

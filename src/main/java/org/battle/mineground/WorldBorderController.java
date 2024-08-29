@@ -2,6 +2,7 @@ package org.battle.mineground;
 
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
+import org.battle.mineground.achievement.AchievementManager;
 import org.battle.mineground.elytra.ElytraCommand;
 import org.bukkit.*;
 import org.bukkit.boss.BarColor;
@@ -49,6 +50,7 @@ public class WorldBorderController implements Listener {
     private final Map<UUID, Integer> quitTimers = new HashMap<>();  // 각 플레이어의 타이머 ID 저장
     private double stepX;
     private double stepZ;
+    private AchievementManager achievementManager;
 
     // 보스바를 반환하는 메서드 추가
     public BossBar getBossBar() {
@@ -90,6 +92,7 @@ public class WorldBorderController implements Listener {
         this.config = plugin.getConfig();
         this.survivingPlayers = Bukkit.getOnlinePlayers().size();
         this.elytraCommand = new ElytraCommand((MineGround) plugin); // ElytraCommand 인스턴스 생성
+        this.achievementManager = new AchievementManager(plugin);
     }
 
     private void showTargetLocation() {
@@ -133,6 +136,8 @@ public class WorldBorderController implements Listener {
                 // Essentials 명령어로 플레이어 속도 설정
                 String command = "speed walk " + speed + " " + player.getName();
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+                // 게임 참여 횟수 증가
+                achievementManager.increasePlayCount(player);
             }
         }
         survivingPlayers = totalPlayers;
@@ -528,7 +533,8 @@ public class WorldBorderController implements Listener {
                 String winnerMessage = String.format("§6§lCongratulations! %s is the last survivor and the WINNER!", winner.getName());
                 Bukkit.broadcastMessage(winnerMessage);
                 celebrateWinner(winner);
-
+                // 우승 횟수 증가
+                achievementManager.increaseWinCount(winner);
                 // 게임 종료 상태로 변경
                 isGameRunning = false; // 게임이 종료됨을 표시
             }
