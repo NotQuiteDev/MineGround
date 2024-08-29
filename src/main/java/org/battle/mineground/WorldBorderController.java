@@ -127,6 +127,7 @@ public class WorldBorderController implements Listener {
 
         int totalPlayers = 0;
         double speed = plugin.getConfig().getDouble("player-walk-speed", 1.7);  // config에서 플레이어 속도를 가져옴
+        achievementManager.startGame();
 
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.getGameMode() == GameMode.SURVIVAL) {
@@ -504,6 +505,7 @@ public class WorldBorderController implements Listener {
 
         // 파티클 빔 소환 취소
         cancelParticleBeam();
+        achievementManager.stopGame();
 
         // 월드보더 설정 초기화
         WorldBorder worldBorder = world.getWorldBorder();

@@ -1,6 +1,7 @@
 package org.battle.mineground;
 
 import org.battle.mineground.achievement.AchievementExpansion;
+import org.battle.mineground.achievement.AchievementManager;
 import org.battle.mineground.arrow_switcher.ArrowSwitcherCommand;
 import org.battle.mineground.arrow_switcher.BowActionListener;
 import org.battle.mineground.arrows.*;
@@ -75,6 +76,11 @@ public class MineGround extends JavaPlugin {
         getServer().getPluginManager().registerEvents(worldBorderController, this); // 이벤트 리스너 등록
         getServer().getPluginManager().registerEvents(new BowActionListener(), this);
         getServer().getPluginManager().registerEvents(new CustomArrowListener(this), this);
+
+        // AchievementManager 인스턴스를 생성하고 이벤트 리스너로 등록
+        AchievementManager achievementManager = new AchievementManager(this);
+        getServer().getPluginManager().registerEvents(achievementManager, this);
+
         ItemRegister itemRegister = new ItemRegister(this);
         getCommand("registeritem").setExecutor(itemRegister);
         getCommand("spawnitem").setExecutor(itemRegister);

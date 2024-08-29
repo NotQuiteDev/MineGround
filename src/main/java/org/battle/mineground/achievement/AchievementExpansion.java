@@ -105,8 +105,59 @@ public class AchievementExpansion extends PlaceholderExpansion {
         if (identifier.equalsIgnoreCase("top1_killcount")) {
             return getTop1Player("killCount");
         }
+        if (identifier.equalsIgnoreCase("damageDealt")) {
+            return String.valueOf(plugin.getConfig().getInt("players." + player.getUniqueId() + ".damageDealt", 0));
+        }
+
+        if (identifier.equalsIgnoreCase("mostDamageDealt")) {
+            return String.valueOf(plugin.getConfig().getInt("achievements." + player.getUniqueId() + ".mostDamageDealt", 0));
+        }
+
+        // 연속 킬
+        if (identifier.equalsIgnoreCase("killstreak")) {
+            return String.valueOf(config.getInt("players." + player.getUniqueId() + ".killStreak", 0));
+        }
+
+        // 최장 생존 시간
+        if (identifier.equalsIgnoreCase("longestSurvivalTime")) {
+            long timeInMillis = config.getLong("achievements." + player.getUniqueId() + ".longestSurvivalTime", 0);
+            return formatTime(timeInMillis);
+        }
+        if (identifier.equalsIgnoreCase("top10_killstreak")) {
+            return getTop10List("highestKillStreak");
+        }
+
+        if (identifier.equalsIgnoreCase("top10_longestSurvivalTime")) {
+            return getTop10List("longestSurvivalTime");
+        }
+
+        // 연속 킬 1위
+        if (identifier.equalsIgnoreCase("top1_killstreak")) {
+            return getTop1Player("highestKillStreak");
+        }
+
+        // 최장 생존 시간 1위
+        if (identifier.equalsIgnoreCase("top1_longestSurvivalTime")) {
+            return getTop1Player("longestSurvivalTime");
+        }
+        // 최장 생존 시간 순위
+        if (identifier.equalsIgnoreCase("longestSurvivalTime_rank")) {
+            return String.valueOf(getRank("longestSurvivalTime", player));
+        }
+        // 연속 킬수 순위
+        if (identifier.equalsIgnoreCase("killstreak_rank")) {
+            return String.valueOf(getRank("highestKillStreak", player));
+        }
+
 
         return null; // Placeholder not found
+    }
+    // 시간을 포맷팅하여 출력하는 메소드 추가
+    private String formatTime(long timeInMillis) {
+        long seconds = (timeInMillis / 1000) % 60;
+        long minutes = (timeInMillis / (1000 * 60)) % 60;
+
+        return String.format("%02d:%02d", minutes, seconds);
     }
 
     // 특정 통계 항목에 대한 플레이어의 순위를 계산하는 메소드
@@ -132,19 +183,20 @@ public class AchievementExpansion extends PlaceholderExpansion {
     }
     // 특정 통계 항목에서 1위 플레이어를 반환하는 메소드
     private String getTop1Player(String stat) {
-        Map<String, Integer> playerStats = new HashMap<>();
+        Map<String, Long> playerStats = new HashMap<>();
         for (String uuid : plugin.getConfig().getConfigurationSection("achievements").getKeys(false)) {
-            int count = plugin.getConfig().getInt("achievements." + uuid + "." + stat, 0);
+            long count = plugin.getConfig().getLong("achievements." + uuid + "." + stat, 0);
             playerStats.put(uuid, count);
         }
 
         // 통계를 내림차순으로 정렬하고 1위 플레이어를 가져옴
         return playerStats.entrySet().stream()
-                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
                 .limit(1) // 1위만 가져옴
                 .map(entry -> {
                     OfflinePlayer p = Bukkit.getOfflinePlayer(UUID.fromString(entry.getKey()));
-                    return p.getName(); // 플레이어의 이름을 반환
+                    String formattedValue = stat.equals("longestSurvivalTime") ? formatTime(entry.getValue()) : String.valueOf(entry.getValue());
+                    return p.getName() + ": " + formattedValue;
                 })
                 .findFirst()
                 .orElse("없음"); // 플레이어가 없을 경우
@@ -152,19 +204,20 @@ public class AchievementExpansion extends PlaceholderExpansion {
 
     // 상위 10명의 통계 목록을 반환하는 메소드
     private String getTop10List(String stat) {
-        Map<String, Integer> playerStats = new HashMap<>();
+        Map<String, Long> playerStats = new HashMap<>();
         for (String uuid : plugin.getConfig().getConfigurationSection("achievements").getKeys(false)) {
-            int count = plugin.getConfig().getInt("achievements." + uuid + "." + stat, 0);
+            long count = plugin.getConfig().getLong("achievements." + uuid + "." + stat, 0);
             playerStats.put(uuid, count);
         }
 
         // 통계를 내림차순으로 정렬하고 상위 10명을 추출
         return playerStats.entrySet().stream()
-                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
                 .limit(10)
                 .map(entry -> {
                     OfflinePlayer p = Bukkit.getOfflinePlayer(UUID.fromString(entry.getKey()));
-                    return "§7" + p.getName() + ": §a" + entry.getValue();
+                    String formattedValue = stat.equals("longestSurvivalTime") ? formatTime(entry.getValue()) : String.valueOf(entry.getValue());
+                    return "§7" + p.getName() + ": §a" + formattedValue;
                 })
                 .collect(Collectors.joining("\n"));
     }
