@@ -48,7 +48,7 @@ public class MineGround extends JavaPlugin {
 
     private void registerListenersAndCommands() {
         // WorldBorderController 초기화 및 리스너 등록
-        worldBorderController = new WorldBorderController(this);
+        worldBorderController = new WorldBorderController(this);  // 인스턴스를 한 번만 생성
 
         worldBorderController.startSpectatorParticleTask();
         ChestSpawner chestSpawner = new ChestSpawner(this);
@@ -59,7 +59,6 @@ public class MineGround extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new HorseTameListener(this), this);
         getServer().getPluginManager().registerEvents(new ExplosionDamageListener(this), this);
-
 
         getServer().getPluginManager().registerEvents(new ElytraListener(this), this);
         getServer().getPluginManager().registerEvents(new EnchantInventoryListener(enchantCombiner), this);
@@ -78,7 +77,7 @@ public class MineGround extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new CustomArrowListener(this), this);
 
         // AchievementManager 인스턴스를 생성하고 이벤트 리스너로 등록
-        AchievementManager achievementManager = new AchievementManager(this);
+        AchievementManager achievementManager = new AchievementManager(this, worldBorderController);
         getServer().getPluginManager().registerEvents(achievementManager, this);
 
         ItemRegister itemRegister = new ItemRegister(this);
@@ -101,7 +100,6 @@ public class MineGround extends JavaPlugin {
 
     public void reloadPlugin() {
         isReloading = true;  // 리로드 중임을 표시
-
         // 기존 리스너 및 스케줄러 작업 취소
         HandlerList.unregisterAll(this);
         Bukkit.getScheduler().cancelTasks(this);

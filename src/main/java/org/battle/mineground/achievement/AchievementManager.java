@@ -1,29 +1,33 @@
 package org.battle.mineground.achievement;
 
+import org.battle.mineground.WorldBorderController;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class AchievementManager implements Listener {
 
     private final JavaPlugin plugin;
+    private final WorldBorderController worldBorderController;  // final로 설정해 명확히 전달 받도록 함
 
-    public AchievementManager(JavaPlugin plugin) {
+    public AchievementManager(JavaPlugin plugin, WorldBorderController worldBorderController) {
         this.plugin = plugin;
         this.plugin.getServer().getPluginManager().registerEvents(this, plugin);
+        this.worldBorderController = worldBorderController;  // 여기서 실제로 전달된 인스턴스로 초기화
     }
+
     // 게임 시작 시 호출되는 메소드
     public void startGame() {
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             plugin.getConfig().set("players." + player.getUniqueId() + ".damageDealt", 0);
             plugin.getConfig().set("players." + player.getUniqueId() + ".killStreak", 0);  // 연속 킬 초기화
             plugin.getConfig().set("players." + player.getUniqueId() + ".startTime", System.currentTimeMillis());  // 생존 시간 초기화
+            plugin.getConfig().set("players." + player.getUniqueId() + ".isAlive", true);  // 생존 상태 초기화
         }
         plugin.saveConfig();
     }
@@ -31,31 +35,41 @@ public class AchievementManager implements Listener {
     // 게임 종료 시 호출되는 메소드
     public void stopGame() {
         for (Player player : plugin.getServer().getOnlinePlayers()) {
+            // 현재 게임의 피해량을 전체 피해량에 추가하여 저장
             int damageDealt = plugin.getConfig().getInt("players." + player.getUniqueId() + ".damageDealt", 0);
             int mostDamageDealt = plugin.getConfig().getInt("achievements." + player.getUniqueId() + ".mostDamageDealt", 0);
+
             if (damageDealt > mostDamageDealt) {
                 plugin.getConfig().set("achievements." + player.getUniqueId() + ".mostDamageDealt", damageDealt);
             }
 
+            int totalDamageDealt = plugin.getConfig().getInt("achievements." + player.getUniqueId() + ".totalDamageDealt", 0);
+            plugin.getConfig().set("achievements." + player.getUniqueId() + ".totalDamageDealt", totalDamageDealt + damageDealt);
+
             int killStreak = plugin.getConfig().getInt("players." + player.getUniqueId() + ".killStreak", 0);
             int highestKillStreak = plugin.getConfig().getInt("achievements." + player.getUniqueId() + ".highestKillStreak", 0);
+
             if (killStreak > highestKillStreak) {
                 plugin.getConfig().set("achievements." + player.getUniqueId() + ".highestKillStreak", killStreak);
             }
 
-            long startTime = plugin.getConfig().getLong("players." + player.getUniqueId() + ".startTime");
-            long survivalTime = System.currentTimeMillis() - startTime;
-            long longestSurvivalTime = plugin.getConfig().getLong("achievements." + player.getUniqueId() + ".longestSurvivalTime", 0);
-            if (survivalTime > longestSurvivalTime) {
-                plugin.getConfig().set("achievements." + player.getUniqueId() + ".longestSurvivalTime", survivalTime);
+            // 플레이어가 게임 중에 살아 있었다면, 생존 시간을 계산
+            if (plugin.getConfig().getBoolean("players." + player.getUniqueId() + ".isAlive", false)) {
+                long startTime = plugin.getConfig().getLong("players." + player.getUniqueId() + ".startTime");
+                long survivalTime = System.currentTimeMillis() - startTime;
+                long longestSurvivalTime = plugin.getConfig().getLong("achievements." + player.getUniqueId() + ".longestSurvivalTime", 0);
+
+                if (survivalTime > longestSurvivalTime) {
+                    plugin.getConfig().set("achievements." + player.getUniqueId() + ".longestSurvivalTime", survivalTime);
+                }
             }
 
-            // 생존 시간 초기화 (게임 종료 후 생존 시간 증가 방지)
+            // 게임 종료 후 생존 시간 초기화 및 생존 상태 업데이트
             plugin.getConfig().set("players." + player.getUniqueId() + ".startTime", 0);
+            plugin.getConfig().set("players." + player.getUniqueId() + ".isAlive", false);
         }
         plugin.saveConfig();
     }
-
 
 
     // 플레이 횟수 증가 메소드
@@ -77,31 +91,58 @@ public class AchievementManager implements Listener {
     }
 
     // 누적 킬수 증가 리스너 (누군가를 죽였을 때)
+// 누적 킬수 증가 리스너 (누군가를 죽였을 때)
     @EventHandler
     public void onPlayerKill(PlayerDeathEvent event) {
-        if (event.getEntity().getKiller() instanceof Player) {
-            Player killer = event.getEntity().getKiller();
-            FileConfiguration config = plugin.getConfig();
-            String path = "achievements." + killer.getUniqueId() + ".killCount";
-            int currentCount = config.getInt(path, 0);
-            config.set(path, currentCount + 1);
-            plugin.saveConfig();
-        }
-    }
-    // 플레이어가 다른 플레이어를 처치할 때 호출되는 메소드
-    public void onPlayerKill(Player killer) {
-        int killStreak = plugin.getConfig().getInt("players." + killer.getUniqueId() + ".killStreak", 0);
-        plugin.getConfig().set("players." + killer.getUniqueId() + ".killStreak", killStreak + 1);
-        plugin.saveConfig();
-    }
-    @EventHandler
-    public void onEntityDeath(EntityDeathEvent event) {
-        if (event.getEntity().getKiller() != null && event.getEntity() instanceof Player) {
-            Player killer = event.getEntity().getKiller();
-            onPlayerKill(killer);
-        }
-    }
+        Player deceased = event.getEntity();
 
+        // 게임이 진행 중인지 확인
+        if (!worldBorderController.isGameRunning()) {
+            return;
+        }
+
+        // 사망한 플레이어의 생존 시간 계산 및 저장
+        long startTime = plugin.getConfig().getLong("players." + deceased.getUniqueId() + ".startTime");
+        long survivalTime = System.currentTimeMillis() - startTime;
+        long longestSurvivalTime = plugin.getConfig().getLong("achievements." + deceased.getUniqueId() + ".longestSurvivalTime", 0);
+
+        if (survivalTime > longestSurvivalTime) {
+            plugin.getConfig().set("achievements." + deceased.getUniqueId() + ".longestSurvivalTime", survivalTime);
+        }
+
+        // 생존 시간 초기화 (죽은 후 다시 생존 시간 기록 방지)
+        plugin.getConfig().set("players." + deceased.getUniqueId() + ".startTime", 0);
+
+        if (!(deceased.getKiller() instanceof Player)) {
+            return;
+        }
+
+        // 이 코드를 추가하여 이벤트 핸들러가 즉시 실행되지 않고, 지연되어 실행되도록 함
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            Player killer = deceased.getKiller();
+            if (killer == null) {
+                return;
+            }
+
+            FileConfiguration config = plugin.getConfig();
+
+            // 킬 카운트 증가
+            String killCountPath = "achievements." + killer.getUniqueId() + ".killCount";
+            int currentKillCount = config.getInt(killCountPath, 0);
+            config.set(killCountPath, currentKillCount + 1);
+            Bukkit.getLogger().info("PlayerKillEvent: " + killer.getName() + "의 킬 카운트가 " + (currentKillCount + 1) + "로 증가했습니다.");
+
+            // 킬 스트릭 증가
+            String killStreakPath = "players." + killer.getUniqueId() + ".killStreak";
+            int currentKillStreak = config.getInt(killStreakPath, 0);
+            config.set(killStreakPath, currentKillStreak + 1);
+            Bukkit.getLogger().info("PlayerKillEvent: " + killer.getName() + "의 킬 스트릭이 " + (currentKillStreak + 1) + "로 증가했습니다.");
+
+            // 설정 파일 저장
+            plugin.saveConfig();
+            Bukkit.getLogger().info("PlayerKillEvent: 설정 파일이 저장되었습니다.");
+        }, 1L);  // 1틱 지연 후 실행
+    }
 
 
     // 플레이어의 업적을 가져오는 메소드

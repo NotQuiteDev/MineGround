@@ -75,6 +75,20 @@ public class AchievementExpansion extends PlaceholderExpansion {
             return String.valueOf(config.getInt(uuidPath + ".killCount", 0));
         }
 
+
+// 누적 데미지 순위
+        if (identifier.equalsIgnoreCase("damageDealt_rank")) {
+            return String.valueOf(getRank("damageDealt", player));
+        }
+
+
+
+// 최대 데미지 순위
+        if (identifier.equalsIgnoreCase("mostDamageDealt_rank")) {
+            return String.valueOf(getRank("mostDamageDealt", player));
+        }
+
+
         // 누적 킬수 순위
         if (identifier.equalsIgnoreCase("killcount_rank")) {
             return String.valueOf(getRank("killCount", player));
@@ -109,8 +123,25 @@ public class AchievementExpansion extends PlaceholderExpansion {
             return String.valueOf(plugin.getConfig().getInt("players." + player.getUniqueId() + ".damageDealt", 0));
         }
 
+        if (identifier.equalsIgnoreCase("top10_damageDealt")) {
+            return getTop10List("damageDealt");
+        }
+
         if (identifier.equalsIgnoreCase("mostDamageDealt")) {
             return String.valueOf(plugin.getConfig().getInt("achievements." + player.getUniqueId() + ".mostDamageDealt", 0));
+        }
+
+        if (identifier.equalsIgnoreCase("top10_mostDamageDealt")) {
+            return getTop10List("mostDamageDealt");
+        }
+        // 1위의 누적 데미지
+        if (identifier.equalsIgnoreCase("top1_damageDealt")) {
+            return getTop1Player("damageDealt");
+        }
+
+// 1위의 최대 데미지
+        if (identifier.equalsIgnoreCase("top1_mostDamageDealt")) {
+            return getTop1Player("mostDamageDealt");
         }
 
         // 연속 킬

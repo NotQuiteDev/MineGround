@@ -92,7 +92,7 @@ public class WorldBorderController implements Listener {
         this.config = plugin.getConfig();
         this.survivingPlayers = Bukkit.getOnlinePlayers().size();
         this.elytraCommand = new ElytraCommand((MineGround) plugin); // ElytraCommand 인스턴스 생성
-        this.achievementManager = new AchievementManager(plugin);
+        this.achievementManager = new AchievementManager(plugin, this);
     }
 
     private void showTargetLocation() {
@@ -550,7 +550,7 @@ public class WorldBorderController implements Listener {
                 // 게임 종료 상태로 변경
                 isGameRunning = false; // 게임이 종료됨을 표시
             }
-        }, 1L);  // 1틱 지연 후 실행
+        }, 20L);  // 1초 지연 후 실행
     }
 
 
