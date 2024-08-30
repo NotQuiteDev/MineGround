@@ -70,7 +70,30 @@ public class MGCommand implements CommandExecutor, Listener {
             } else if (args[0].equalsIgnoreCase("load")) {
                 SchematicLoader loader = new SchematicLoader();
                 Location location = new Location(plugin.getServer().getWorld("world"), -313, 64, 136);
-                loader.loadSchematic("MHS", location);
+                // 1번째 스키메틱 로드
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    loader.loadSchematic("MHS1", location);
+                    sender.sendMessage("MHSpart1.schematic has been loaded.");
+                }, 0L); // 즉시 실행
+
+                // 2번째 스키메틱 로드
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    loader.loadSchematic("MHS2", location);
+                    sender.sendMessage("MHSpart2.schematic has been loaded.");
+                }, 20L); // 1초 지연
+
+                // 3번째 스키메틱 로드
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    loader.loadSchematic("MHS3", location);
+                    sender.sendMessage("MHSpart3.schematic has been loaded.");
+                }, 40L); // 2초 지연
+
+                // 4번째 스키메틱 로드
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    loader.loadSchematic("MHS4", location);
+                    sender.sendMessage("MHSpart4.schematic has been loaded.");
+                }, 60L); // 3초 지연
+
                 sender.sendMessage("MHS.schematic has been loaded at -313, 64, 136.");
                 plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), "minecraft:kill @e[type=!minecraft:player]");
                 sender.sendMessage("All entities except players have been killed.");
