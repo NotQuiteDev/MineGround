@@ -74,10 +74,12 @@ public class AchievementManager implements Listener {
             // 생존 시간 업데이트
             if (player.getGameMode() == GameMode.SURVIVAL) {
                 long startTime = playerStartTime.getOrDefault(playerId, 0L);
-                long survivalTime = System.currentTimeMillis() - startTime;
-                long longestSurvivalTime = plugin.getConfig().getLong("achievements." + playerId + ".longestSurvivalTime", 0);
-                if (survivalTime > longestSurvivalTime) {
-                    plugin.getConfig().set("achievements." + playerId + ".longestSurvivalTime", survivalTime);
+                if (startTime > 0) { // startTime이 0이 아닐 때만 생존 시간 계산
+                    long survivalTime = System.currentTimeMillis() - startTime;
+                    long longestSurvivalTime = plugin.getConfig().getLong("achievements." + playerId + ".longestSurvivalTime", 0);
+                    if (survivalTime > longestSurvivalTime) {
+                        plugin.getConfig().set("achievements." + playerId + ".longestSurvivalTime", survivalTime);
+                    }
                 }
             }
 
@@ -103,14 +105,16 @@ public class AchievementManager implements Listener {
 
         if (deceased.getGameMode() == GameMode.SURVIVAL) {
             long startTime = playerStartTime.getOrDefault(deceasedId, 0L);
-            long survivalTime = System.currentTimeMillis() - startTime;
+            if (startTime > 0) { // startTime이 0이 아닐 때만 생존 시간 계산
+                long survivalTime = System.currentTimeMillis() - startTime;
 
-            long longestSurvivalTime = plugin.getConfig().getLong("achievements." + deceasedId + ".longestSurvivalTime", 0);
-            if (survivalTime > longestSurvivalTime) {
-                plugin.getConfig().set("achievements." + deceasedId + ".longestSurvivalTime", survivalTime);
+                long longestSurvivalTime = plugin.getConfig().getLong("achievements." + deceasedId + ".longestSurvivalTime", 0);
+                if (survivalTime > longestSurvivalTime) {
+                    plugin.getConfig().set("achievements." + deceasedId + ".longestSurvivalTime", survivalTime);
+                }
+
+                playerStartTime.put(deceasedId, 0L); // 생존 시간 초기화
             }
-
-            playerStartTime.put(deceasedId, 0L); // 생존 시간 초기화
         }
 
         Player killer = deceased.getKiller();
@@ -128,14 +132,16 @@ public class AchievementManager implements Listener {
 
         if (player.getGameMode() == GameMode.SURVIVAL) {
             long startTime = playerStartTime.getOrDefault(playerId, 0L);
-            long survivalTime = System.currentTimeMillis() - startTime;
+            if (startTime > 0) { // startTime이 0이 아닐 때만 생존 시간 계산
+                long survivalTime = System.currentTimeMillis() - startTime;
 
-            long longestSurvivalTime = plugin.getConfig().getLong("achievements." + playerId + ".longestSurvivalTime", 0);
-            if (survivalTime > longestSurvivalTime) {
-                plugin.getConfig().set("achievements." + playerId + ".longestSurvivalTime", survivalTime);
+                long longestSurvivalTime = plugin.getConfig().getLong("achievements." + playerId + ".longestSurvivalTime", 0);
+                if (survivalTime > longestSurvivalTime) {
+                    plugin.getConfig().set("achievements." + playerId + ".longestSurvivalTime", survivalTime);
+                }
+
+                playerStartTime.put(playerId, 0L); // 생존 시간 초기화
             }
-
-            playerStartTime.put(playerId, 0L); // 생존 시간 초기화
         }
     }
 
