@@ -94,7 +94,13 @@ public class AchievementManager implements Listener {
         plugin.getConfig().set("players." + killer.getUniqueId() + ".killStreak", killStreak + 1);
         plugin.saveConfig();
     }
-
+    @EventHandler
+    public void onEntityDeath(EntityDeathEvent event) {
+        if (event.getEntity().getKiller() != null && event.getEntity() instanceof Player) {
+            Player killer = event.getEntity().getKiller();
+            onPlayerKill(killer);
+        }
+    }
 
 
 
@@ -118,12 +124,6 @@ public class AchievementManager implements Listener {
             plugin.saveConfig();
         }
     }
-    @EventHandler
-    public void onEntityDeath(EntityDeathEvent event) {
-        if (event.getEntity().getKiller() != null && event.getEntity() instanceof Player) {
-            Player killer = event.getEntity().getKiller();
-            onPlayerKill(killer);
-        }
-    }
+
 
 }

@@ -175,15 +175,20 @@ public class WorldBorderController implements Listener {
         }, 1L);  // 1틱 지연 후 실행
 
         if (isGameRunning) {
-            // 게임 진행 중일 때만 카운트 감소 및 보스바 업데이트
-            if (survivingPlayers > 0) {
-                survivingPlayers--;
+            // 현재 서바이벌 모드에 있는 플레이어 수를 계산하여 업데이트
+            int currentSurvivingPlayers = 0;
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                if (p.getGameMode() == GameMode.SURVIVAL) {
+                    currentSurvivingPlayers++;
+                }
             }
+            setSurvivingPlayers(currentSurvivingPlayers);
 
             // mg check 명령어 실행
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mg check");
         }
     }
+
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
@@ -521,26 +526,31 @@ public class WorldBorderController implements Listener {
     }
 
     public void checkForWinner() {
-        if (survivingPlayers == 1) { // 생존자가 1명 남았을 때
-            Player winner = null;
+        // 일정 시간 지연 후 우승자 확인
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            // 모든 생존 플레이어를 확인하여 생존자가 정확히 1명인지 확인
+            List<Player> survivingPlayersList = new ArrayList<>();
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (player.getGameMode() == GameMode.SURVIVAL) {
-                    winner = player;
-                    break;
+                    survivingPlayersList.add(player);
                 }
             }
 
-            if (winner != null) {
+            if (survivingPlayersList.size() == 1) {
+                Player winner = survivingPlayersList.get(0);
+
                 // 우승자에게 축하 메시지 전송 및 효과
                 String winnerMessage = String.format("§6§lCongratulations! %s is the last survivor and the WINNER!", winner.getName());
                 Bukkit.broadcastMessage(winnerMessage);
                 celebrateWinner(winner);
+
                 // 우승 횟수 증가
                 achievementManager.increaseWinCount(winner);
+
                 // 게임 종료 상태로 변경
                 isGameRunning = false; // 게임이 종료됨을 표시
             }
-        }
+        }, 1L);  // 1틱 지연 후 실행
     }
 
 

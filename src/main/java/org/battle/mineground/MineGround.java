@@ -32,7 +32,7 @@ public class MineGround extends JavaPlugin {
 
     @Override
     public void onDisable() {
-
+        saveConfig();
         if (worldBorderController != null) {
             worldBorderController.stopPhases();  // 월드 보더 작업 정리
         }
