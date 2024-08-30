@@ -72,25 +72,25 @@ public class MGCommand implements CommandExecutor, Listener {
                 Location location = new Location(plugin.getServer().getWorld("world"), -313, 64, 136);
                 // 1번째 스키메틱 로드
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    loader.loadSchematic("MHS1", location);
+                    loader.loadSchematic("MHSpart1", location);
                     sender.sendMessage("MHSpart1.schematic has been loaded.");
                 }, 0L); // 즉시 실행
 
                 // 2번째 스키메틱 로드
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    loader.loadSchematic("MHS2", location);
+                    loader.loadSchematic("MHSpart2", location);
                     sender.sendMessage("MHSpart2.schematic has been loaded.");
                 }, 20L); // 1초 지연
 
                 // 3번째 스키메틱 로드
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    loader.loadSchematic("MHS3", location);
+                    loader.loadSchematic("MHSpart3", location);
                     sender.sendMessage("MHSpart3.schematic has been loaded.");
                 }, 40L); // 2초 지연
 
                 // 4번째 스키메틱 로드
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    loader.loadSchematic("MHS4", location);
+                    loader.loadSchematic("MHSpart4", location);
                     sender.sendMessage("MHSpart4.schematic has been loaded.");
                 }, 60L); // 3초 지연
 
