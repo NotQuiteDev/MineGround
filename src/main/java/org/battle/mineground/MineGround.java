@@ -73,7 +73,7 @@ public class MineGround extends JavaPlugin {
         // MGCommand를 이벤트 리스너로 등록
         getServer().getPluginManager().registerEvents(mgCommand, this);
         getServer().getPluginManager().registerEvents(worldBorderController, this); // 이벤트 리스너 등록
-        getServer().getPluginManager().registerEvents(new BowActionListener(), this);
+        getServer().getPluginManager().registerEvents(new BowActionListener(this), this);
         getServer().getPluginManager().registerEvents(new CustomArrowListener(this), this);
 
         // AchievementManager 인스턴스를 생성하고 이벤트 리스너로 등록
