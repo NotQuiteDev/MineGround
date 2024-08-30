@@ -67,6 +67,7 @@ public class AchievementManager implements Listener {
             // 게임 종료 후 생존 시간 초기화 및 생존 상태 업데이트
             plugin.getConfig().set("players." + player.getUniqueId() + ".startTime", 0);
             plugin.getConfig().set("players." + player.getUniqueId() + ".isAlive", false);
+            plugin.getConfig().set("players." + player.getUniqueId() + ".damageDealt", 0);
         }
         plugin.saveConfig();
     }
@@ -165,6 +166,6 @@ public class AchievementManager implements Listener {
             plugin.saveConfig();
         }
     }
-
+//ToDO : 나중에 문제가 생긴다면, 그때그때 저장하는 방식이 아닌 맵에 저장했다가 게임 시작과 끝에 저장하는 방식으로 바꾸기
 
 }
