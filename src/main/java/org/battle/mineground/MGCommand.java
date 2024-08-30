@@ -92,9 +92,11 @@ public class MGCommand implements CommandExecutor, Listener {
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
                     loader.loadSchematic("MHSpart4", location);
                     sender.sendMessage("MHSpart4.schematic has been loaded.");
+                    plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), "minecraft:kill @e[type=!minecraft:player]");
                 }, 60L); // 3초 지연
 
                 sender.sendMessage("MHS.schematic has been loaded at -313, 64, 136.");
+
                 plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), "minecraft:kill @e[type=!minecraft:player]");
                 sender.sendMessage("All entities except players have been killed.");
                 return true;
