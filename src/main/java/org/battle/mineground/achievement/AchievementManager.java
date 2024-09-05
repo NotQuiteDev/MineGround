@@ -40,9 +40,6 @@ public class AchievementManager implements Listener {
             playerKillCount.put(playerId, 0);
             playerStartTime.put(playerId, System.currentTimeMillis());
 
-            // 게임 시작 시 플레이 횟수 증가
-            int playCount = plugin.getConfig().getInt("achievements." + playerId + ".playCount", 0) + 1;
-            playerPlayCount.put(playerId, playCount);
         }
     }
 
@@ -83,9 +80,7 @@ public class AchievementManager implements Listener {
                 }
             }
 
-            // 플레이 및 우승 횟수 업데이트
-            plugin.getConfig().set("achievements." + playerId + ".playCount", playerPlayCount.getOrDefault(playerId, 0));
-            plugin.getConfig().set("achievements." + playerId + ".winCount", playerWinCount.getOrDefault(playerId, 0));
+
         }
         plugin.saveConfig();
 
@@ -157,19 +152,26 @@ public class AchievementManager implements Listener {
 
     public void increaseWinCount(Player player) {
         UUID playerId = player.getUniqueId();
-        // 현재 플레이어의 우승 횟수를 Map에서 가져옴
-        int currentWinCount = playerWinCount.getOrDefault(playerId, 0);
-        // 우승 횟수를 1 증가시킴
-        playerWinCount.put(playerId, currentWinCount + 1);
+        int currentWinCount = playerWinCount.getOrDefault(playerId, 0) + 1;
+        playerWinCount.put(playerId, currentWinCount);
+
+        // 즉시 config에 저장
+        plugin.getConfig().set("achievements." + playerId + ".winCount", currentWinCount);
+        plugin.saveConfig();
     }
+
 
     public void increasePlayCount(Player player) {
         UUID playerId = player.getUniqueId();
-        // 현재 플레이어의 게임 참여 횟수를 Map에서 가져옴
-        int currentPlayCount = playerPlayCount.getOrDefault(playerId, 0);
-        // 게임 참여 횟수를 1 증가시킴
-        playerPlayCount.put(playerId, currentPlayCount + 1);
+        int currentPlayCount = playerPlayCount.getOrDefault(playerId, 0) + 1;
+        playerPlayCount.put(playerId, currentPlayCount);
+
+        // 즉시 config에 저장
+        plugin.getConfig().set("achievements." + playerId + ".playCount", currentPlayCount);
+        plugin.saveConfig();
     }
+
+
 
     @EventHandler
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
