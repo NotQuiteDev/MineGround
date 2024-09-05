@@ -65,6 +65,16 @@ public class WorldBorderController implements Listener {
     public void setSurvivingPlayers(int survivingPlayers) {
         this.survivingPlayers = survivingPlayers;
     }
+    // 서바이벌 모드에 있는 온라인 플레이어 수를 다시 계산하여 갱신
+    public void updateSurvivingPlayers() {
+        long survivalCount = Bukkit.getOnlinePlayers().stream()
+                .filter(player -> player.getGameMode() == GameMode.SURVIVAL)
+                .count();
+
+        setSurvivingPlayers((int) survivalCount);
+    }
+
+
 
     // 플레이어 나간 시간 기록을 위한 맵 접근자 메서드
     public Map<UUID, Long> getPlayerQuitTimestamps() {
@@ -171,21 +181,14 @@ public class WorldBorderController implements Listener {
 
             // 관전 모드로 변경
             player.setGameMode(GameMode.SPECTATOR);
+            updateSurvivingPlayers();
         }, 1L);  // 1틱 지연 후 실행
 
-        if (isGameRunning) {
-            // 현재 서바이벌 모드에 있는 플레이어 수를 계산하여 업데이트
-            int currentSurvivingPlayers = 0;
-            for (Player p : Bukkit.getOnlinePlayers()) {
-                if (p.getGameMode() == GameMode.SURVIVAL) {
-                    currentSurvivingPlayers++;
-                }
-            }
-            setSurvivingPlayers(currentSurvivingPlayers);
+
 
             // mg check 명령어 실행
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mg check");
-        }
+
     }
 
 
@@ -196,7 +199,6 @@ public class WorldBorderController implements Listener {
 
         // 플레이어가 서바이벌 모드일 경우 처리
         if (player.getGameMode() == GameMode.SURVIVAL && survivingPlayers > 0) {
-            survivingPlayers--;
             playerQuitTimestamps.put(playerUUID, System.currentTimeMillis()); // 나간 시간 기록
 
             // 기존 타이머가 있다면 취소
@@ -213,7 +215,8 @@ public class WorldBorderController implements Listener {
             // 타이머 ID 저장
             quitTimers.put(playerUUID, taskId);
         }
-
+        // updateSurvivingPlayers()를 1틱(0.05초) 지연 후 실행
+        Bukkit.getScheduler().runTaskLater(plugin, this::updateSurvivingPlayers, 1L);
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mg check");  // mg check 명령어 실행
     }
 

@@ -217,12 +217,9 @@ public class MGCommand implements CommandExecutor, Listener {
 
         Bukkit.getLogger().info("Player " + player.getName() + " joined. Quit time: " + quitTime);
 
-        // 현재 생존자 수를 직접 계산
-        int currentSurvivingPlayers = (int) Bukkit.getOnlinePlayers().stream()
-                .filter(p -> p.getGameMode() == GameMode.SURVIVAL)
-                .count();
 
-        worldBorderController.setSurvivingPlayers(currentSurvivingPlayers);  // 직접 계산된 값 설정
+
+        worldBorderController.updateSurvivingPlayers();
 
         // 게임이 진행 중일 때만 보스바 업데이트 및 추가 작업 진행
         if (worldBorderController.isGameRunning()) {

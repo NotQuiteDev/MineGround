@@ -152,22 +152,23 @@ public class AchievementManager implements Listener {
 
     public void increaseWinCount(Player player) {
         UUID playerId = player.getUniqueId();
-        int currentWinCount = playerWinCount.getOrDefault(playerId, 0) + 1;
+        int currentWinCount = plugin.getConfig().getInt("achievements." + playerId + ".winCount", 0);
         playerWinCount.put(playerId, currentWinCount);
 
         // 즉시 config에 저장
-        plugin.getConfig().set("achievements." + playerId + ".winCount", currentWinCount);
+        plugin.getConfig().set("achievements." + playerId + ".winCount", currentWinCount +1);
         plugin.saveConfig();
     }
 
 
     public void increasePlayCount(Player player) {
         UUID playerId = player.getUniqueId();
-        int currentPlayCount = playerPlayCount.getOrDefault(playerId, 0) + 1;
+        // config에서 playCount 값을 불러옴
+        int currentPlayCount = plugin.getConfig().getInt("achievements." + playerId + ".playCount", 0);
         playerPlayCount.put(playerId, currentPlayCount);
 
         // 즉시 config에 저장
-        plugin.getConfig().set("achievements." + playerId + ".playCount", currentPlayCount);
+        plugin.getConfig().set("achievements." + playerId + ".playCount", currentPlayCount+1);
         plugin.saveConfig();
     }
 
